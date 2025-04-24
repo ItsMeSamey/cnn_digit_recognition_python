@@ -1,4 +1,5 @@
 import os
+from sys import setswitchinterval
 import numpy as np
 from functions_loss import LossFunctionBase
 from layers import ConvolveTester, DenseTester, FlattenTester, LRFnWrappedTester, ParallelTester, SequentialTester, TestingLayerBase, TrainingLayerBase
@@ -130,7 +131,7 @@ class CnnTester:
     self.layer.reset(input_shape)
     self.hash = hash
 
-  def toTrainer(self) -> 'CnnTrainer':
+  def to_trainer(self) -> 'CnnTrainer':
     return CnnTrainer(self.input_shape, self.loss_gen, self.layer.to_trainer(), self.hash)
 
   def save(self):
@@ -173,13 +174,14 @@ class CnnTrainer:
     self.layer.reset(input_shape)
     self.hash = hash
 
-  def toTester(self) -> 'CnnTester':
+  def to_tester(self) -> 'CnnTester':
     return CnnTester(self.input_shape, self.loss_gen, self.layer.to_tester(), self.hash)
 
-  def train(self, iterator, learning_rate: int, batch_size: int):
+  def train(self, iterator, learning_rate: int, batch_size: int, verbose: bool = False):
     n = 0
     for image, label in iterator:
       predictions = self.layer.forward(image)
+      if verbose: print(f"({label} -> {np.argmax(predictions)}) = {self.loss_gen.forward(predictions, label)*100:.3f}")
       self.layer.backward(self.loss_gen.backward(predictions, label), False)
       n += 1
       if n == batch_size:
