@@ -110,6 +110,8 @@ class ConvolveTester(TestingLayerBase):
     # Calculate output dimensions
     self.out_h = (input_h - filter_h) // self.stride_y + 1
     self.out_w = (input_w - filter_w) // self.stride_x + 1
+    if self.out_w * self.stride_x < input_w: self.out_w += 1
+    if self.out_h * self.stride_y < input_h: self.out_h += 1
 
     return (self.out_h, self.out_w)
 
@@ -138,7 +140,7 @@ class ConvolveTester(TestingLayerBase):
         w_start = j * stride_x
         w_end = w_start + filter_w
         input_region = input_data[h_start:h_end, w_start:w_end]
-        output[i, j] = np.sum(input_region * self.filter) + self.bias
+        output[i, j] = np.sum(input_region * self.filter[0:input_region.shape[0], 0: input_region.shape[1]]) + self.bias
 
     return output
 
@@ -752,6 +754,7 @@ class FlattenTester(TestingLayerBase):
   def reset(self, input_shape: tuple) -> tuple:
     self.input_shape = input_shape
     self.output_shape = (int(np.prod(input_shape)),)
+    print(self.input_shape, self.output_shape)
     return self.output_shape
 
   def forward(self, input_data: np.ndarray) -> np.ndarray:

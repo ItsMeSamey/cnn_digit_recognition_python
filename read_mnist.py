@@ -92,6 +92,30 @@ class MnistIterator:
     else:
       raise IndexError(f"Index {index} is out of bounds for dataset with size {self.count}.")
 
+  def __iter__(self):
+    """
+    Makes the object iterable. Resets the index and returns self.
+    """
+    self._index = 0
+    return self
+
+  def __next__(self) -> tuple[np.ndarray, int]:
+    """
+    Returns the next item in the iteration.
+
+    Returns:
+      tuple[np.ndarray, int]: The next (image, label) tuple.
+
+    Raises:
+      StopIteration: When the iteration is exhausted.
+    """
+    if self._index < self.count:
+      item = self[self._index]
+      self._index += 1
+      return item
+    else:
+      raise StopIteration
+
   def shuffle(self) -> None:
     """
     Shuffles the dataset (images and labels together) in place.
@@ -108,49 +132,6 @@ class MnistIterator:
   def has_next(self) -> bool:
     """Checks if there are more items to iterate over sequentially."""
     return self._index < self.count
-
-  def batch(self, batch_size: int) -> tuple[np.ndarray, np.ndarray] | None:
-    """
-    Extracts the next sequential batch of images and labels.
-
-    Advances the internal iterator index. If the remaining items are
-    fewer than batch_size, it returns the remaining items. Returns None
-    if the iterator has reached the end.
-
-    Args:
-      batch_size (int): The desired number of samples in the batch.
-
-    Returns:
-      Optional[List[Tuple[np.ndarray, int]]]: A list where each element
-      is a tuple containing (image_array, label_int), or None if no
-      more items are available.
-    """
-
-    if not self.has_next(): return None
-
-    start_index = self._index
-    end_index = min(start_index + batch_size, self.count)
-
-    self._index = end_index
-    return (self.images[start_index:end_index], self.labels[start_index:end_index])
-
-  def random_batch(self, batch_size: int) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Returns a random batch of images and labels sampled *with replacement*.
-
-    This method does *not* affect the internal iterator index (_index).
-    It returns separate arrays for images and labels for potential
-    vectorized operations.
-
-    Args:
-      batch_size (int): The number of samples to include in the batch.
-
-    Returns:
-      tuple[np.ndarray, np.ndarray]: A tuple containing batch_images
-      (batch_size, rows, cols) and batch_labels (batch_size,).
-    """
-    indices = np.random.choice(self.count, size=batch_size, replace=True)
-    return (self.images[indices], self.labels[indices])
 
 class InvalidImageError(MnistError):
   """Error for invalid file format or structure."""
@@ -186,11 +167,14 @@ def print_image(image: np.ndarray) -> None:
     print("".join(ascii_chars[i] for i in row_indices))
 
 
-dataset_dir = "datasets"
+dataset_dir = "dataset"
 train_images_path = os.path.join(dataset_dir, "train-images.idx3-ubyte")
 train_labels_path = os.path.join(dataset_dir, "train-labels.idx1-ubyte")
+mnist_train_iter = MnistIterator(train_images_path, train_labels_path)
+
 test_images_path = os.path.join(dataset_dir, "t10k-images.idx3-ubyte")
 test_labels_path = os.path.join(dataset_dir, "t10k-labels.idx1-ubyte")
+mnist_test_iter = MnistIterator(test_images_path, test_labels_path)
 
 # --- Example Usage / Test ---
 if __name__ == "__main__":
