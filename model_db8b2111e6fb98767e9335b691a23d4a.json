@@ -1,0 +1,273 @@
+[{
+  "name": "layer",
+  "offset": 0,
+  "info": [{
+    "name": "sequential_merged_layers",
+    "offset": 0,
+    "info": [{
+      "name": "0",
+      "offset": 0,
+      "info": [{
+        "name": "layer",
+        "offset": 0,
+        "info": [{
+          "name": "parallel_merged_layers",
+          "offset": 0,
+          "info": [{
+            "name": "0",
+            "offset": 0,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "1",
+            "offset": 520,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "2",
+            "offset": 1040,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "3",
+            "offset": 1560,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "4",
+            "offset": 2080,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "5",
+            "offset": 2600,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "6",
+            "offset": 3120,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "7",
+            "offset": 3640,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "8",
+            "offset": 4160,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "9",
+            "offset": 4680,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "10",
+            "offset": 5200,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "11",
+            "offset": 5720,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "12",
+            "offset": 6240,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "13",
+            "offset": 6760,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "14",
+            "offset": 7280,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          },{
+            "name": "15",
+            "offset": 7800,
+            "info": [{
+              "name": "filter",
+              "offset": 0,
+              "info": "[8][8]f64"
+            },{
+              "name": "bias",
+              "offset": 512,
+              "info": "f64"
+            }]
+          }]
+        }]
+      }]
+    },{
+      "name": "1",
+      "offset": 8320,
+      "info": [{
+        "name": "weights",
+        "offset": 0,
+        "info": "[196][784]f64"
+      },{
+        "name": "biases",
+        "offset": 1229312,
+        "info": "[196]f64"
+      }]
+    },{
+      "name": "2",
+      "offset": 1239200,
+      "info": [{
+        "name": "weights",
+        "offset": 0,
+        "info": "[196][196]f64"
+      },{
+        "name": "biases",
+        "offset": 307328,
+        "info": "[196]f64"
+      }]
+    },{
+      "name": "3",
+      "offset": 1548096,
+      "info": [{
+        "name": "weights",
+        "offset": 0,
+        "info": "[49][196]f64"
+      },{
+        "name": "biases",
+        "offset": 76832,
+        "info": "[49]f64"
+      }]
+    },{
+      "name": "4",
+      "offset": 1625320,
+      "info": [{
+        "name": "weights",
+        "offset": 0,
+        "info": "[49][49]f64"
+      },{
+        "name": "biases",
+        "offset": 19208,
+        "info": "[49]f64"
+      }]
+    },{
+      "name": "5",
+      "offset": 1644920,
+      "info": [{
+        "name": "weights",
+        "offset": 0,
+        "info": "[10][49]f64"
+      },{
+        "name": "biases",
+        "offset": 3920,
+        "info": "[10]f64"
+      }]
+    }]
+  }]
+}]
