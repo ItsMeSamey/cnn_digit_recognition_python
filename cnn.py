@@ -63,15 +63,15 @@ def recursive_read_apply(fp, layer: TestingLayerBase, structure: dict):
     # print(stack)
 
 class CnnTester:
-  def __init__(self, input_shape: tuple, loss_gen: LossFunctionBase, layer: TestingLayerBase):
-    self.layer = layer
-    self.loss_gen = loss_gen
+  def __init__(self, input_shape: tuple, loss_gen: LossFunctionBase, layer: TestingLayerBase, hash: str):
     self.input_shape = input_shape
+    self.loss_gen = loss_gen
+    self.layer = layer
     self.layer.reset(input_shape)
-    pass
+    self.hash = hash
 
   def toTrainer(self) -> 'CnnTrainer':
-    return CnnTrainer(self.input_shape, self.loss_gen, self.layer.to_trainer())
+    return CnnTrainer(self.input_shape, self.loss_gen, self.layer.to_trainer(), self.hash)
 
   def save(self, hash: str):
     return NotImplementedError("Not implemented")
@@ -100,14 +100,15 @@ class CnnTester:
     return correct / (correct + incorrect)
 
 class CnnTrainer:
-  def __init__(self, input_shape: tuple, loss_gen: LossFunctionBase, layer: TrainingLayerBase):
-    self.layer = layer
-    self.loss_gen = loss_gen
+  def __init__(self, input_shape: tuple, loss_gen: LossFunctionBase, layer: TrainingLayerBase, hash: str):
     self.input_shape = input_shape
+    self.loss_gen = loss_gen
+    self.layer = layer
     self.layer.reset(input_shape)
+    self.hash = hash
 
   def toTester(self) -> 'CnnTester':
-    return CnnTester(self.input_shape, self.loss_gen, self.layer.to_tester())
+    return CnnTester(self.input_shape, self.loss_gen, self.layer.to_tester(), self.hash)
 
   def train(self, iterator, learning_rate: int, batch_size: int):
     n = 0
