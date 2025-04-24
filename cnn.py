@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from functions_loss import LossFunctionBase
-from layers import ConvolveTester, DenseTester, FlattenTester, ParallelTester, SequentialTester, TestingLayerBase, TrainingLayerBase
+from layers import ConvolveTester, DenseTester, FlattenTester, LRFnWrappedTester, ParallelTester, SequentialTester, TestingLayerBase, TrainingLayerBase
 import json
 
 def _parse_shape(info_str) -> tuple:
@@ -24,6 +24,10 @@ def _recursive_read_apply(fp, layer: TestingLayerBase, structure: dict):
     name: str = structure["name"]
     offset: int = structure["offset"]
     info: str | list[dict] = structure["info"]
+
+    if isinstance(layer, LRFnWrappedTester):
+      stack.append((layer.sublayer, structure, base_offset))
+      continue
 
     if name == "layer" or (name.isalnum() and isinstance(info, list) and len(info) == 1):
       if not isinstance(info, list): raise ValueError(f"expected layer's info to be a list, got {info}")
@@ -111,6 +115,10 @@ def _recursive_write_apply(fd, layer: TestingLayerBase, structure: list, base_of
     _write_f64_array(fd, base_offset, layer.weights)
     _write_f64_array(fd, base_offset + biases_offset, layer.biases)
     return int(biases_offset + 8 * np.prod(layer.biases.shape))
+  elif isinstance(layer, LRFnWrappedTester):
+    substructure = []
+    structure.append({"name": "layer", "offset": 0, "info": substructure})
+    return _recursive_write_apply(fd, layer.sublayer, substructure, base_offset)
   else:
     raise ValueError(f"unknown layer type {layer}")
 

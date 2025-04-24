@@ -1,3 +1,4 @@
+from typing import Callable
 import numpy as np
 from abc import ABC, abstractmethod
 from functions_activate import ActivationFunctionBase
@@ -156,7 +157,7 @@ class ConvolveTester(TestingLayerBase):
     """
     return self.activation_function.forward(self.convolve(input_data))
 
-  def to_trainer(self) -> 'TrainingLayerBase':
+  def to_trainer(self) -> TrainingLayerBase:
     """
     Converts this testing layer to a training layer.
     Requires filter and biass to have been initialized (e.g., by calling reset).
@@ -304,7 +305,7 @@ class ConvolveTrainer(TrainingLayerBase):
     self.tester.bias -= learning_rate * self.bias_gradient
     self.reset_gradients()
 
-  def to_tester(self) -> 'TestingLayerBase':
+  def to_tester(self) -> TestingLayerBase:
     """
     Converts this training layer back to a testing layer.
     Returns the underlying ConvolveTester instance with the current filter and bias.
@@ -355,7 +356,7 @@ class DenseTester(TestingLayerBase):
     """
     return self.activation_function.forward(np.dot(self.weights, input_data) + self.biases)
 
-  def to_trainer(self) -> 'TrainingLayerBase':
+  def to_trainer(self) -> TrainingLayerBase:
     """
     Converts this testing layer to a training layer.
     Requires weights and biases to have been initialized (e.g., by calling reset).
@@ -471,7 +472,7 @@ class DenseTrainer(TrainingLayerBase):
     self.weight_gradients = np.zeros_like(self.tester.weights)
     self.bias_gradients = np.zeros_like(self.tester.biases)
 
-  def to_tester(self) -> 'TestingLayerBase':
+  def to_tester(self) -> TestingLayerBase:
     """
     Converts this training layer back to a testing layer.
     Returns the underlying DenseTester instance with the current weights and biases.
@@ -523,7 +524,7 @@ class SequentialTester(TestingLayerBase):
     for layer in self.layers: input_data = layer.forward(input_data)
     return input_data
 
-  def to_trainer(self) -> 'TrainingLayerBase':
+  def to_trainer(self) -> TrainingLayerBase:
     """
     Converts the sequential testing layer to a sequential training layer.
     """
@@ -602,7 +603,7 @@ class SequentialTrainer(TrainingLayerBase):
     """
     for layer in self.layers: layer.apply_gradient(learning_rate)
 
-  def to_tester(self) -> 'TestingLayerBase':
+  def to_tester(self) -> TestingLayerBase:
     """
     Converts the sequential training layer back to a sequential testing layer.
     """
@@ -652,7 +653,7 @@ class ParallelTester(TestingLayerBase):
     """
     return np.concatenate([layer.forward(input_data).flatten() for layer in self.layers])
 
-  def to_trainer(self) -> 'TrainingLayerBase':
+  def to_trainer(self) -> TrainingLayerBase:
     """
     Converts the parallel testing layer to a parallel training layer.
     """
@@ -741,7 +742,7 @@ class ParallelTrainer(TrainingLayerBase):
     """
     for layer in self.layers: layer.apply_gradient(learning_rate)
 
-  def to_tester(self) -> 'TestingLayerBase':
+  def to_tester(self) -> TestingLayerBase:
     """
     Converts the parallel training layer back to a parallel testing layer.
     """
@@ -760,7 +761,7 @@ class FlattenTester(TestingLayerBase):
   def forward(self, input_data: np.ndarray) -> np.ndarray:
     return input_data.flatten()
 
-  def to_trainer(self) -> 'TrainingLayerBase':
+  def to_trainer(self) -> TrainingLayerBase:
     return FlattenTrainer(self)
 
 class FlattenTrainer(TrainingLayerBase):
@@ -783,6 +784,43 @@ class FlattenTrainer(TrainingLayerBase):
   def apply_gradient(self, learning_rate):
     pass
 
-  def to_tester(self) -> 'TestingLayerBase':
+  def to_tester(self) -> TestingLayerBase:
+    return self.tester
+
+class LRFnWrappedTester(TestingLayerBase):
+  def __init__(self, sublayer: TestingLayerBase, fn: Callable[[float], float]) -> None:
+    self.fn = fn
+    self.sublayer = sublayer
+
+  def reset(self, input_shape: tuple) -> tuple:
+    return self.sublayer.reset(input_shape)
+
+  def forward(self, input_data: np.ndarray) -> np.ndarray:
+    return self.sublayer.forward(input_data)
+
+  def to_trainer(self) -> TrainingLayerBase:
+    return LRFnWrappedTrainer(self)
+
+class LRFnWrappedTrainer(TrainingLayerBase):
+  def __init__(self, tester: LRFnWrappedTester) -> None:
+    self.tester = tester
+    self.sublayer = tester.sublayer.to_trainer()
+
+  def reset_gradients(self):
+    self.sublayer.reset_gradients()
+
+  def reset(self, input_shape: tuple) -> tuple:
+    return self.sublayer.reset(input_shape)
+
+  def forward(self, input_data: np.ndarray) -> np.ndarray:
+    return self.sublayer.forward(input_data)
+
+  def backward(self, d_next: np.ndarray, calc_prev: bool) -> np.ndarray | None:
+    return self.sublayer.backward(d_next, calc_prev)
+
+  def apply_gradient(self, learning_rate):
+    self.sublayer.apply_gradient(self.tester.fn(learning_rate))
+
+  def to_tester(self) -> TestingLayerBase:
     return self.tester
 
