@@ -91,7 +91,7 @@ class ConvolveTester(TestingLayerBase):
 
   def reset(self, input_shape: tuple) -> tuple:
     """
-    Randomly initializes the weights and biase for the testing layer.
+    Randomly initializes the filter and bias for the testing layer.
 
     Args:
       input_shape: The shape of the input data (height, width).
@@ -104,8 +104,8 @@ class ConvolveTester(TestingLayerBase):
     filter_h, filter_w = self.filter_y, self.filter_x
 
     std_dev = np.sqrt(2.0 / (filter_h * filter_w)) # 'He' initialization scaling
-    self.weights = np.random.randn(filter_h, filter_w) * std_dev
-    self.biase = np.float64(0)
+    self.filter = np.random.randn(filter_h, filter_w) * std_dev
+    self.bias = np.float64(0)
 
     # Calculate output dimensions
     self.out_h = (input_h - filter_h) // self.stride_y + 1
@@ -124,7 +124,7 @@ class ConvolveTester(TestingLayerBase):
     Returns:
       The output array after convolution and activation.
     """
-    filter_h, filter_w = self.weights.shape
+    filter_h, filter_w = self.filter.shape
     stride_y, stride_x = self.stride_y, self.stride_x
 
     # Initialize output array
@@ -138,7 +138,7 @@ class ConvolveTester(TestingLayerBase):
         w_start = j * stride_x
         w_end = w_start + filter_w
         input_region = input_data[h_start:h_end, w_start:w_end]
-        output[i, j] = np.sum(input_region * self.weights) + self.biase
+        output[i, j] = np.sum(input_region * self.filter) + self.bias
 
     return output
 
@@ -157,7 +157,7 @@ class ConvolveTester(TestingLayerBase):
   def to_trainer(self) -> 'TrainingLayerBase':
     """
     Converts this testing layer to a training layer.
-    Requires weights and biases to have been initialized (e.g., by calling reset).
+    Requires filter and biass to have been initialized (e.g., by calling reset).
     """
     return ConvolveTrainer(self)
 
@@ -168,11 +168,11 @@ class ConvolveTrainer(TrainingLayerBase):
 
     Args:
       tester: The corresponding ConvolveTester instance.
-      input_shape: Optional initial input shape. Weights and biases will be
+      input_shape: Optional initial input shape. filter and biass will be
              initialized when reset() is called with the actual input shape.
     """
     self.tester = tester
-    self.weight_gradients: np.ndarray = np.zeros_like(self.tester.weights)
+    self.filter_gradients: np.ndarray = np.zeros_like(self.tester.filter)
     self.bias_gradient: np.float64 = np.float64(0)
 
     self.cached_input: np.ndarray | None = None # Input to the layer
@@ -183,13 +183,13 @@ class ConvolveTrainer(TrainingLayerBase):
     """
     Resets all the gradients to zero.
     """
-    self.weight_gradients = np.zeros_like(self.tester.weights)
+    self.filter_gradients = np.zeros_like(self.tester.filter)
     self.bias_gradient = np.float64(0)
 
   def reset(self, input_shape: tuple) -> tuple:
     """
     Resets the accumulated gradients, clears cached values, and
-    initializes/re-initializes weights and biases based on the input shape.
+    initializes/re-initializes filter and biass based on the input shape.
     Calls reset on the underlying tester to handle weight/bias initialization.
 
     Args:
@@ -228,7 +228,7 @@ class ConvolveTrainer(TrainingLayerBase):
   def backward(self, d_next: np.ndarray, calc_prev: bool) -> np.ndarray | None:
     """
     Performs the backward pass for the convolution layer.
-    Calculates gradients for weights and bias and accumulates them.
+    Calculates gradients for filter and bias and accumulates them.
     Calculates and returns the gradient with respect to the input if calc_prev is True.
 
     Args:
@@ -248,22 +248,22 @@ class ConvolveTrainer(TrainingLayerBase):
     # if d_output_convolve.shape != (self.tester.out_h, self.tester.out_w):
     #    raise RuntimeError(f"Activation backward returned gradient with incorrect shape {d_output_convolve.shape}, expected {(self.tester.out_h, self.tester.out_w)}.")
 
-    filter_h, filter_w = self.tester.weights.shape
+    filter_h, filter_w = self.tester.filter.shape
     stride_y, stride_x = self.tester.stride_y, self.tester.stride_x
     input_data = self.cached_input
     output_h, output_w = self.tester.out_h, self.tester.out_w # Shape of d_output_convolve
 
-    d_weights = np.zeros_like(self.tester.weights, dtype=d_output_convolve.dtype)
+    d_filter = np.zeros_like(self.tester.filter, dtype=d_output_convolve.dtype)
     for i in range(output_h):
       for j in range(output_w):
         h_start = i * stride_y
         w_start = j * stride_x
         input_region = input_data[h_start:h_start + filter_h, w_start:w_start + filter_w]
-        d_weights += d_output_convolve[i, j] * input_region
+        d_filter += d_output_convolve[i, j] * input_region
 
     d_bias = np.sum(d_output_convolve)
 
-    self.weight_gradients += d_weights
+    self.filter_gradients += d_filter
     self.bias_gradient += d_bias
 
     self.cached_input = None
@@ -273,7 +273,7 @@ class ConvolveTrainer(TrainingLayerBase):
 
     d_prev = np.zeros_like(input_data, dtype=d_output_convolve.dtype)
     input_h, input_w = input_data.shape
-    weights = self.tester.weights
+    filter = self.tester.filter
 
     for i in range(output_h):
       for j in range(output_w):
@@ -286,26 +286,26 @@ class ConvolveTrainer(TrainingLayerBase):
             input_w_idx = w_start + fx
 
             if input_h_idx < input_h and input_w_idx < input_w:
-              d_prev[input_h_idx, input_w_idx] += d_output_convolve[i, j] * weights[fy, fx]
+              d_prev[input_h_idx, input_w_idx] += d_output_convolve[i, j] * filter[fy, fx]
 
     return d_prev
 
   def apply_gradient(self, learning_rate):
     """
-    Apply internally stored gradients to update weights and bias.
+    Apply internally stored gradients to update filter and bias.
     Resets gradients to zero after application.
     """
-    # if self.weight_gradients is None or self.bias_gradient is None:
+    # if self.filter_gradients is None or self.bias_gradient is None:
     #    raise RuntimeError("Gradients have not been calculated or are missing.")
 
-    self.tester.weights -= learning_rate * self.weight_gradients
-    self.tester.biase -= learning_rate * self.bias_gradient
+    self.tester.filter -= learning_rate * self.filter_gradients
+    self.tester.bias -= learning_rate * self.bias_gradient
     self.reset_gradients()
 
   def to_tester(self) -> 'TestingLayerBase':
     """
     Converts this training layer back to a testing layer.
-    Returns the underlying ConvolveTester instance with the current weights and bias.
+    Returns the underlying ConvolveTester instance with the current filter and bias.
     """
     return self.tester
 
@@ -746,6 +746,9 @@ class ParallelTrainer(TrainingLayerBase):
     return self.tester
 
 class FlattenTester(TestingLayerBase):
+  def __init__(self):
+    pass
+
   def reset(self, input_shape: tuple) -> tuple:
     self.input_shape = input_shape
     self.output_shape = (int(np.prod(input_shape)),)
