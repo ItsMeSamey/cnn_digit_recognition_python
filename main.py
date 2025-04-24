@@ -1,11 +1,11 @@
 from cnn import CnnTester
 from functions_activate import NormalizeSquared, PReLU
 from functions_loss import MeanSquaredError
-from layers import ConvolveTester, DenseTester, FlattenTester, ParallelTester, SequentialTester
+from layers import ConvolveTester, DenseTester, FlattenTester, LRFnWrappedTester, ParallelTester, SequentialTester
 from read_mnist import mnist_test_iter
 
 tester = CnnTester((28, 28), MeanSquaredError(), SequentialTester([
-  ParallelTester([
+  LRFnWrappedTester(ParallelTester([
     ConvolveTester(8, 8, 4, 4, PReLU(0.125)),
     ConvolveTester(8, 8, 4, 4, PReLU(0.125)),
     ConvolveTester(8, 8, 4, 4, PReLU(0.125)),
@@ -22,7 +22,7 @@ tester = CnnTester((28, 28), MeanSquaredError(), SequentialTester([
     ConvolveTester(8, 8, 4, 4, PReLU(0.125)),
     ConvolveTester(8, 8, 4, 4, PReLU(0.125)),
     ConvolveTester(8, 8, 4, 4, PReLU(0.125)),
-  ]),
+  ]), lambda rate, layer: rate / len(layer.layers)),
 
   FlattenTester(),
 

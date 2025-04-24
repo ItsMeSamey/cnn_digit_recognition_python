@@ -788,7 +788,7 @@ class FlattenTrainer(TrainingLayerBase):
     return self.tester
 
 class LRFnWrappedTester(TestingLayerBase):
-  def __init__(self, sublayer: TestingLayerBase, fn: Callable[[float], float]) -> None:
+  def __init__(self, sublayer: TestingLayerBase, fn: Callable[[float, TestingLayerBase], float]) -> None:
     self.fn = fn
     self.sublayer = sublayer
 
@@ -819,7 +819,7 @@ class LRFnWrappedTrainer(TrainingLayerBase):
     return self.sublayer.backward(d_next, calc_prev)
 
   def apply_gradient(self, learning_rate):
-    self.sublayer.apply_gradient(self.tester.fn(learning_rate))
+    self.sublayer.apply_gradient(self.tester.fn(learning_rate, self.tester.sublayer))
 
   def to_tester(self) -> TestingLayerBase:
     return self.tester
