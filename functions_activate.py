@@ -10,21 +10,21 @@ class ActivationFunctionBase(ABC):
     """
     Forward pass of the activation function.
     """
-    ...
+    pass
 
   @abstractmethod
   def backward(self, derivative_array: np.ndarray, cache_in, cache_out: np.ndarray) -> np.ndarray:
     """
     Backward pass of the activation function.
     """
-    ...
+    pass
 
   @abstractmethod
   def needs_cache_in(self) -> bool:
     """
     The cache_in input will be None if this returns False
     """
-    ...
+    pass
 
 class ReLU(ActivationFunctionBase):
   def forward(self, input_array: np.ndarray) -> np.ndarray:

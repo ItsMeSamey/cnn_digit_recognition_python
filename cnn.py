@@ -20,6 +20,17 @@ class CnnTester:
   def load(self):
     pass
 
+  def test(self, iterator) -> np.ndarray:
+    correct = 0
+    incorrect = 0
+    for image, label in iterator:
+      result = self.layer.forward(image)
+      max_idx = np.argmax(result)
+      if label == max_idx:
+        correct += 1
+      else:
+        incorrect += 1
+    return correct / (correct + incorrect)
 
 class CnnTrainer:
   def __init__(self, layer: TrainingLayerBase, loss_gen: LossFunctionBase):
@@ -28,4 +39,15 @@ class CnnTrainer:
 
   def toTester(self) -> 'CnnTester':
     return CnnTester(self.layer.to_tester(), self.loss_gen)
+
+  def train(self, iterator, learning_rate: int, batch_size: int):
+    n = 0
+    for image, label in iterator:
+      predictions = self.layer.forward(image)
+      self.layer.backward(self.loss_gen.backward(predictions, label), False)
+      n += 1
+      if n == batch_size:
+        self.layer.apply_gradient(learning_rate)
+        n = 0
+    if n > 0: self.layer.apply_gradient(learning_rate)
 
