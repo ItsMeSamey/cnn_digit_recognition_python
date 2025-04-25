@@ -33,20 +33,20 @@ tester = CnnTester((28, 28), MeanSquaredError(), SequentialTester([
   DenseTester(10, NormalizeSquared()),
 ]), 'db8b2111e6fb98767e9335b691a23d4a')
 
-# trainer = tester.to_trainer()
-# trainer.train(mnist_test_iter, 1, 32, True)
+exists = tester.exists()
+if not exists:
+  print("Model does not exist, please train the model first.")
+  if __name__ != '__main__':
+    exit(1)
+  else:
+    trainer = tester.to_trainer()
+    trainer.train(mnist_test_iter, 1, 32, True)
+    tester.save()
+else:
+  tester.load()
 
-# print("Loading model...")
-# tester.load()
-# tester.hash = 'test'
-# print("Saving model...")
-# tester.save()
-
-print("Loading model...")
-tester.load()
-
-print("Testing...")
-accuracy = tester.test(mnist_test_iter, True)
-
-print("Accuracy: %.2f%%" % (accuracy*100))
+if __name__ == '__main__':
+  print("Testing...")
+  accuracy = tester.test(mnist_test_iter, True)
+  print("Accuracy: %.2f%%" % (accuracy*100))
 
