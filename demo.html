@@ -56,8 +56,8 @@
       </div>
     </div>
 
-    <div id="predictionDisplay" class="text-2xl font-bold text-green-400 mt-4"></div>
-    <div id="errorDisplay" class="text-red-500 mt-2 text-center"></div>
+    <span id="predictionDisplay" class="text-2xl font-bold text-green-400 mt-4"></span>
+    <span id="errorDisplay" class="text-red-500 mt-2 text-center"></span>
   </div>
 
   <script>
@@ -72,9 +72,23 @@
     let blurAmount = 0;
     let contrastAmount = 100;
 
+    let inflight = false;
+    function lazyPredict() {
+      if (inflight) return;
+      inflight = true;
+      setTimeout(() => {
+        try {
+          handlePredict();
+        } catch (err) {
+          console.error(err);
+        }
+        inflight = false;
+      }, 100);
+    }
     function updatePreview() {
       previewCtx.fillRect(0, 0, 28, 28);
       previewCtx.drawImage(drawingCanvas, 0, 0, 280, 280, 0, 0, 28, 28);
+      lazyPredict();
     }
 
     function updateFilter() {
@@ -99,7 +113,7 @@
     contrastRange.addEventListener('input', (e) => updateFilter(contrastAmount = parseInt(e.target.value)));
 
     tool.onMouseDown = function(event) {
-      predictionDisplay.textContent = '';
+      // predictionDisplay.textContent = '';
       errorDisplay.textContent = '';
 
       path = new paper.Path({
@@ -141,6 +155,7 @@
     }
 
     function printImageToConsole(imageData) {
+      return;
       const asciiChars = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
       const numChars = asciiChars.length;
       const width = 28;
@@ -168,7 +183,7 @@
     async function handlePredict() {
       if (paper.project.activeLayer.children.length === 0) {
         errorDisplay.textContent = 'Draw a digit before predicting.';
-        predictionDisplay.textContent = '';
+        // predictionDisplay.textContent = '';
         return;
       }
 
@@ -177,11 +192,14 @@
 
       predictButton.textContent = 'Predicting...';
       errorDisplay.textContent = '';
-      predictionDisplay.textContent = '';
+      // predictionDisplay.textContent = '';
 
       try {
         const res = await fetch('http://localhost:5000/predict', {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/octet-stream'
+          },
           body: grayscaleImageData,
         });
 
@@ -191,12 +209,7 @@
         }
 
         const data = await res.json();
-
-        if (data.prediction !== undefined) {
-          predictionDisplay.textContent = `Prediction: ${data.prediction}`;
-        } else {
-          throw new Error('Unexpected response format from server.');
-        }
+        predictionDisplay.textContent = `Predicted ${data.prediction} with confidence ${data.percentages[data.prediction].toFixed(2)}`;
       } catch (err) {
         errorDisplay.textContent = `Error: ${err.message}`;
         console.error(err);
@@ -210,7 +223,7 @@
     clearButton.addEventListener('click', () => {
       paper.project.activeLayer.removeChildren();
       paper.view.draw();
-      predictionDisplay.textContent = '';
+      // predictionDisplay.textContent = '';
       errorDisplay.textContent = '';
       lastPath = null;
       updatePreview();

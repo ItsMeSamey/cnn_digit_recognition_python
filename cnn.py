@@ -153,6 +153,9 @@ class CnnTester:
     with open(f"model_{self.hash}.cnn", 'rb') as f:
       _recursive_read_apply(f, self.layer, model_structure[0])
 
+  def predict(self, image: np.ndarray) -> np.ndarray:
+    return self.layer.forward(image)
+
   def test(self, iterator, verbose: bool = False) -> float:
     correct = 0
     incorrect = 0
