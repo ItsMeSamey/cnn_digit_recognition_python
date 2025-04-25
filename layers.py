@@ -114,7 +114,8 @@ class ConvolveTester(TestingLayerBase):
     if self.out_w * self.stride_x < input_w: self.out_w += 1
     if self.out_h * self.stride_y < input_h: self.out_h += 1
 
-    return (self.out_h, self.out_w)
+    self.output_shape = (self.out_h, self.out_w)
+    return self.output_shape
 
   def convolve(self, input_data: np.ndarray) -> np.ndarray:
     """
@@ -262,7 +263,9 @@ class ConvolveTrainer(TrainingLayerBase):
         h_start = i * stride_y
         w_start = j * stride_x
         input_region = input_data[h_start:h_start + filter_h, w_start:w_start + filter_w]
-        d_filter += d_output_convolve[i, j] * input_region
+        output_region = d_output_convolve[i, j]
+        if len(output_region.shape) == 0: continue
+        d_filter[:output_region.shape[0], :output_region.shape[1]] += output_region * input_region[:output_region.shape[0], :output_region.shape[1]]
 
     d_bias = np.sum(d_output_convolve)
 
@@ -335,11 +338,13 @@ class DenseTester(TestingLayerBase):
       The shape of the output data (out_width).
     """
     if len(input_shape) != 1: raise ValueError("Input shape must be a 1-dimensional tuple.")
+    self.input_shape = input_shape
     self.input_width = input_shape[0]
     std_dev = np.sqrt(2.0 / self.input_width)
     self.weights = np.random.randn(self.out_width, self.input_width) * std_dev
     self.biases = np.zeros(self.out_width)
-    return tuple([self.out_width])
+    self.output_shape = (self.out_width,)
+    return self.output_shape
 
   def forward(self, input_data: np.ndarray) -> np.ndarray:
     """
@@ -362,7 +367,6 @@ class DenseTester(TestingLayerBase):
     Requires weights and biases to have been initialized (e.g., by calling reset).
     """
     return DenseTrainer(self)
-
 
 class DenseTrainer(TrainingLayerBase):
   def __init__(self, tester: DenseTester) -> None:
@@ -395,7 +399,6 @@ class DenseTrainer(TrainingLayerBase):
     """
     retval = self.tester.reset(input_shape)
     self.reset_gradients()
-    self.input_shape = input_shape
 
     self.cached_input = None
     self.cached_input_to_activation = None
@@ -413,10 +416,10 @@ class DenseTrainer(TrainingLayerBase):
     Returns:
       The output array after linear transformation and activation, shape (1, out_width).
     """
-    if self.tester.weights is None or self.tester.biases is None or self.input_shape is None:
+    if self.tester.weights is None or self.tester.biases is None or self.tester.input_shape is None:
       raise RuntimeError("Layer not properly initialized. Call reset() first.")
-    if input_data.shape != self.input_shape:
-      raise ValueError(f"Input data shape {input_data.shape} does not match expected input shape {self.input_shape}.")
+    if input_data.shape != self.tester.input_shape:
+      raise ValueError(f"Input data shape {input_data.shape} does not match expected input shape {self.tester.input_shape}.")
 
     self.cached_input = input_data
     linear_output = np.dot(self.tester.weights, input_data) + self.tester.biases
@@ -442,12 +445,13 @@ class DenseTrainer(TrainingLayerBase):
       The gradient with respect to the input (d_prev) if calc_prev is True, otherwise None.
       Shape of d_prev will match the original input shape (self.input_shape).
     """
-    d_output_linear = self.tester.activation_function.backward(d_next, self.cached_input_to_activation, self.cached_activated_output)
-    # if d_output_linear.shape != (self.tester.out_width):
-    #   raise RuntimeError(f"Activation backward returned gradient with incorrect shape {d_output_linear.shape}, expected {(self.tester.out_width,)}.")
+    if self.cached_input is None or self.cached_activated_output is None:
+      raise RuntimeError("Cached values are missing. Ensure forward() was called before backward().")
+    d_bias = self.tester.activation_function.backward(d_next, self.cached_input_to_activation, self.cached_activated_output)
+    if d_bias.shape != (self.tester.out_width,):
+      raise RuntimeError(f"Activation backward returned gradient with incorrect shape {d_bias.shape}, expected {(self.tester.out_width,)}.")
 
-    d_bias = d_output_linear
-    d_weights = np.outer(d_output_linear, self.cached_input)
+    d_weights = np.outer(d_bias, self.cached_input)
     # if d_weights.shape != (self.tester.out_width, self.tester.input_width):
     #   raise RuntimeError(f"Calculated weight gradient shape {d_weights.shape} does not match expected shape {(self.tester.out_width, self.tester.input_width)}.")
 
@@ -458,7 +462,7 @@ class DenseTrainer(TrainingLayerBase):
     self.cached_input_to_activation = None
     self.cached_activated_output = None
     if not calc_prev: return
-    return np.dot(d_output_linear, self.tester.weights)
+    return np.dot(d_bias, self.tester.weights)
 
   def apply_gradient(self, learning_rate):
     """
@@ -639,7 +643,7 @@ class ParallelTester(TestingLayerBase):
     """
     self.input_shape = input_shape
     self.output_shape = sum([np.prod(layer.reset(input_shape)) for layer in self.layers])
-    return tuple([self.output_shape])
+    return (self.output_shape,)
 
   def forward(self, input_data: np.ndarray) -> np.ndarray:
     """
@@ -674,12 +678,7 @@ class ParallelTrainer(TrainingLayerBase):
       tester: The corresponding ParallelTester instance.
     """
     self.tester = tester
-    # Convert each individual layer in the tester to its training variant
     self.layers = [layer.to_trainer() for layer in self.tester.layers]
-
-    # Cache to store the input data for the backward pass (needed for d_prev summation)
-    self._cached_input: np.ndarray | None = None
-
 
   # Assuming individual trainer layers have a reset_gradients method
   def reset_gradients(self):
@@ -701,7 +700,7 @@ class ParallelTrainer(TrainingLayerBase):
     """
     self.tester.input_shape = input_shape
     self.tester.output_shape = sum([np.prod(layer.reset(input_shape)) for layer in self.layers])
-    return tuple([self.tester.output_shape])
+    return (self.tester.output_shape,)
 
   def forward(self, input_data: np.ndarray) -> np.ndarray:
     """
@@ -729,11 +728,17 @@ class ParallelTrainer(TrainingLayerBase):
       The gradient with respect to the input (d_prev) if calc_prev is True, otherwise None.
     """
     if not calc_prev:
-      for layer in self.layers: layer.backward(d_next, False)
+      for layer in self.layers:
+        offset = d_next.shape[0] - np.prod(layer.tester.output_shape)
+        layer.backward(d_next[offset:].reshape(layer.tester.output_shape), False)
+        d_next = d_next[:offset]
       return None
     else:
-      retavl = np.zeros_like(self._cached_input, dtype=d_next.dtype)
-      for layer in self.layers: retavl += layer.backward(d_next, True) / len(self.layers)
+      retavl = np.zeros(self.tester.input_shape, dtype=d_next.dtype)
+      for layer in self.layers:
+        offset = d_next.shape[0] - np.prod(layer.tester.output_shape)
+        retavl += layer.backward(d_next[offset:].reshape(layer.tester.output_shape), True) / len(self.layers)
+        d_next = d_next[:offset]
       return retavl
 
   def apply_gradient(self, learning_rate):
@@ -755,7 +760,6 @@ class FlattenTester(TestingLayerBase):
   def reset(self, input_shape: tuple) -> tuple:
     self.input_shape = input_shape
     self.output_shape = (int(np.prod(input_shape)),)
-    print(self.input_shape, self.output_shape)
     return self.output_shape
 
   def forward(self, input_data: np.ndarray) -> np.ndarray:
