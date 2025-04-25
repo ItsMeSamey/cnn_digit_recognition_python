@@ -20,15 +20,10 @@
 
     <div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
       <div class="flex flex-col items-center flex-1">
-        <h2 class="text-xl font-semibold text-white mb-2">Draw Here (280x280)</h2>
+        <h2 class="text-xl font-semibold text-white mb-2">Draw Here</h2>
         <div class="relative w-70 h-70 rounded-lg shadow-lg">
-          <canvas id="drawingCanvas" width="280" height="280" class="block rounded-lg border-2 border-gray-400 shadow-md cursor-crosshair bg-white"></canvas>
-        </div>
-      </div>
-      <div class="flex flex-col items-center flex-1">
-        <h2 class="text-xl font-semibold text-white mb-2">Processed Preview (28x28)</h2>
-        <div class="relative w-70 h-70 rounded-lg shadow-lg flex items-center justify-center">
-          <canvas id="previewCanvas" width="28" height="28" class="block rounded-lg border-2 border-gray-400 shadow-md bg-white" style="image-rendering: pixelated; width: 280px; height: 280px;"></canvas>
+          <canvas id="previewCanvas" width="28" height="28" class="rounded shadow-md bg-white pointer-events-none absolute" style="image-rendering: pixelated; width: 280px; height: 280px;"></canvas>
+          <canvas id="drawingCanvas" width="280" height="280" class="rounded shadow-md cursor-crosshair bg-white" style="width: 280px; height: 280px;"></canvas>
         </div>
       </div>
     </div>
@@ -55,7 +50,7 @@
         <label for="blurRange">Blur:</label>
         <input id="blurRange" type="range" min="0" max="2" step="0.1" value="0" class="w-32">
       </div>
-       <div class="flex justify-between items-center">
+      <div class="flex justify-between items-center">
         <label for="contrastRange">Contrast:</label>
         <input id="contrastRange" type="range" min="0" max="100" value="100" class="w-32">
       </div>
@@ -137,15 +132,13 @@
     };
 
     tool.onMouseDrag = function(event) {
-      if (path) {
-        path.add(event.point);
-      }
+      if (path) path.add(event.point);
+      // Update preview continuously during drag
+      updatePreview();
     };
 
     tool.onMouseUp = function(event) {
-      if (path && smoothing > 0) {
-        path.simplify(smoothing);
-      }
+      if (path && smoothing > 0) path.simplify(smoothing);
       updatePreview();
     };
 
@@ -192,6 +185,7 @@
       }
 
       const grayscaleImageData = getScaledImageData();
+      console.log(grayscaleImageData)
 
       const tempCanvasForDataUrl = document.createElement('canvas');
       const tempCtxForDataUrl = tempCanvasForDataUrl.getContext('2d');
@@ -200,11 +194,11 @@
 
       const imageDataForDataUrl = tempCtxForDataUrl.createImageData(28, 28);
       for(let i = 0; i < grayscaleImageData.length; i++) {
-          const gray = 255 - grayscaleImageData[i];
-          imageDataForDataUrl.data[i * 4] = gray;
-          imageDataForDataUrl.data[i * 4 + 1] = gray;
-          imageDataForDataUrl.data[i * 4 + 2] = gray;
-          imageDataForDataUrl.data[i * 4 + 3] = 255;
+        const gray = 255 - grayscaleImageData[i];
+        imageDataForDataUrl.data[i * 4] = gray;
+        imageDataForDataUrl.data[i * 4 + 1] = gray;
+        imageDataForDataUrl.data[i * 4 + 2] = gray;
+        imageDataForDataUrl.data[i * 4 + 3] = 255;
       }
       tempCtxForDataUrl.putImageData(imageDataForDataUrl, 0, 0);
       const imageDataUrl = tempCanvasForDataUrl.toDataURL('image/png');
@@ -216,8 +210,7 @@
       try {
         const res = await fetch('http://localhost:5000/predict', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: imageDataUrl })
+          body: imageDataUrl,
         });
 
         if (!res.ok) {
@@ -255,4 +248,3 @@
   </script>
 </body>
 </html>
-
