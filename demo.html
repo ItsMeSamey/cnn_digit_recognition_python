@@ -64,6 +64,7 @@
     paper.setup('drawingCanvas');
     const tool = new paper.Tool();
     const previewCtx = previewCanvas.getContext('2d');
+    previewCtx.fillStyle = 'white';
 
     let lastPath = null;
     let strokeWidth = 20;
@@ -72,26 +73,16 @@
     let contrastAmount = 100;
 
     function updatePreview() {
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      tempCanvas.width = 28;
-      tempCanvas.height = 28;
+      previewCtx.fillRect(0, 0, 28, 28);
+      previewCtx.drawImage(drawingCanvas, 0, 0, 280, 280, 0, 0, 28, 28);
+    }
 
-      tempCtx.fillStyle = 'white';
-      tempCtx.fillRect(0, 0, 28, 28);
-
+    function updateFilter() {
       let filters = '';
       if (blurAmount > 0) filters += `blur(${blurAmount}px) `;
       if (contrastAmount !== 100) filters += `contrast(${contrastAmount}%) `;
-
-      tempCtx.filter = filters.trim();
-
-      tempCtx.drawImage(drawingCanvas, 0, 0, 280, 280, 0, 0, 28, 28);
-
-      tempCtx.filter = 'none';
-
-      previewCtx.clearRect(0, 0, 28, 28);
-      previewCtx.drawImage(tempCanvas, 0, 0);
+      previewCtx.filter = filters.trim();
+      updatePreview();
     }
 
     strokeWidthRange.addEventListener('input', (e) => {
@@ -99,23 +90,13 @@
       if (lastPath) {
         lastPath.strokeWidth = strokeWidth;
         paper.view.draw();
-        updatePreview();
       }
-    });
-
-    smoothingRange.addEventListener('input', (e) => {
-      smoothing = parseInt(e.target.value);
-    });
-
-    blurRange.addEventListener('input', (e) => {
-      blurAmount = parseFloat(e.target.value);
       updatePreview();
     });
 
-    contrastRange.addEventListener('input', (e) => {
-      contrastAmount = parseInt(e.target.value);
-      updatePreview();
-    });
+    smoothingRange.addEventListener('input', (e) => updatePreview(smoothing = parseInt(e.target.value)));
+    blurRange.addEventListener('input', (e) => updateFilter(blurAmount = parseFloat(e.target.value)));
+    contrastRange.addEventListener('input', (e) => updateFilter(contrastAmount = parseInt(e.target.value)));
 
     tool.onMouseDown = function(event) {
       predictionDisplay.textContent = '';
@@ -133,7 +114,6 @@
 
     tool.onMouseDrag = function(event) {
       if (path) path.add(event.point);
-      // Update preview continuously during drag
       updatePreview();
     };
 
@@ -142,27 +122,10 @@
       updatePreview();
     };
 
-    function getScaledImageData() {
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
+    function getGrayscaleImageData() {
+      updatePreview();
 
-      tempCanvas.width = 28;
-      tempCanvas.height = 28;
-
-      tempCtx.fillStyle = 'white';
-      tempCtx.fillRect(0, 0, 28, 28);
-
-      let filters = '';
-      if (blurAmount > 0) filters += `blur(${blurAmount}px) `;
-      if (contrastAmount !== 100) filters += `contrast(${contrastAmount}%) `;
-
-      tempCtx.filter = filters.trim();
-
-      tempCtx.drawImage(drawingCanvas, 0, 0, 280, 280, 0, 0, 28, 28);
-
-      tempCtx.filter = 'none';
-
-      const imageData = tempCtx.getImageData(0, 0, 28, 28);
+      const imageData = previewCtx.getImageData(0, 0, 28, 28);
       const pixels = imageData.data;
       const grayscaleImage = new Uint8Array(28 * 28);
 
@@ -177,6 +140,31 @@
       return grayscaleImage;
     }
 
+    function printImageToConsole(imageData) {
+      const asciiChars = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
+      const numChars = asciiChars.length;
+      const width = 28;
+      const height = 28;
+
+      if (imageData.length !== width * height) {
+        console.error("Image data size is not 28x28.");
+        return;
+      }
+
+      let output = '';
+      for (let y = 0; y < height; y++) {
+        let rowString = '';
+        for (let x = 0; x < width; x++) {
+          const pixelValue = imageData[y * width + x];
+          const normalizedValue = pixelValue / 255;
+          const charIndex = Math.min(Math.floor(normalizedValue * numChars), numChars - 1);
+          rowString += asciiChars[charIndex];
+        }
+        output += rowString + '\n';
+      }
+      console.log(`--- Image Data (ASCII) ---\n${output}\n--------------------------`);
+    }
+
     async function handlePredict() {
       if (paper.project.activeLayer.children.length === 0) {
         errorDisplay.textContent = 'Draw a digit before predicting.';
@@ -184,24 +172,8 @@
         return;
       }
 
-      const grayscaleImageData = getScaledImageData();
-      console.log(grayscaleImageData)
-
-      const tempCanvasForDataUrl = document.createElement('canvas');
-      const tempCtxForDataUrl = tempCanvasForDataUrl.getContext('2d');
-      tempCanvasForDataUrl.width = 28;
-      tempCanvasForDataUrl.height = 28;
-
-      const imageDataForDataUrl = tempCtxForDataUrl.createImageData(28, 28);
-      for(let i = 0; i < grayscaleImageData.length; i++) {
-        const gray = 255 - grayscaleImageData[i];
-        imageDataForDataUrl.data[i * 4] = gray;
-        imageDataForDataUrl.data[i * 4 + 1] = gray;
-        imageDataForDataUrl.data[i * 4 + 2] = gray;
-        imageDataForDataUrl.data[i * 4 + 3] = 255;
-      }
-      tempCtxForDataUrl.putImageData(imageDataForDataUrl, 0, 0);
-      const imageDataUrl = tempCanvasForDataUrl.toDataURL('image/png');
+      const grayscaleImageData = getGrayscaleImageData();
+      printImageToConsole(grayscaleImageData);
 
       predictButton.textContent = 'Predicting...';
       errorDisplay.textContent = '';
@@ -210,7 +182,7 @@
       try {
         const res = await fetch('http://localhost:5000/predict', {
           method: 'POST',
-          body: imageDataUrl,
+          body: grayscaleImageData,
         });
 
         if (!res.ok) {
