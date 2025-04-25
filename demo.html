@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MNIST Digit Recognizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://unpkg.com/paper@0.12.15/dist/paper-full.min.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    input[type="range"]::-webkit-slider-thumb, input[type="range"]::-moz-range-thumb { background: #3b82f6; }
+    input[type="checkbox"] { accent-color: #3b82f6; }
+  </style>
+</head>
+<body class="bg-gray-900 flex items-center justify-center min-h-screen p-4">
+  <div class="flex flex-col items-center gap-4 w-full max-w-md">
+    <h1 class="text-3xl font-bold text-white mb-4">Digit Recognizer</h1>
+
+    <div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
+      <div class="flex flex-col items-center flex-1">
+        <h2 class="text-xl font-semibold text-white mb-2">Draw Here (280x280)</h2>
+        <div class="relative w-70 h-70 rounded-lg shadow-lg">
+          <canvas id="drawingCanvas" width="280" height="280" class="block rounded-lg border-2 border-gray-400 shadow-md cursor-crosshair bg-white"></canvas>
+        </div>
+      </div>
+      <div class="flex flex-col items-center flex-1">
+        <h2 class="text-xl font-semibold text-white mb-2">Processed Preview (28x28)</h2>
+        <div class="relative w-70 h-70 rounded-lg shadow-lg flex items-center justify-center">
+          <canvas id="previewCanvas" width="28" height="28" class="block rounded-lg border-2 border-gray-400 shadow-md bg-white" style="image-rendering: pixelated; width: 280px; height: 280px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-4 w-full justify-center mt-4">
+      <button id="clearButton" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-md py-2 px-4 border border-gray-600 flex-1 flex items-center justify-center">
+        <i class="fas fa-trash mr-2"></i> Clear
+      </button>
+      <button id="predictButton" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md py-2 px-4 flex-1 flex items-center justify-center">
+        <i class="fas fa-magnifying-glass mr-2"></i> Predict
+      </button>
+    </div>
+
+    <div class="flex flex-col gap-3 w-full text-white mt-4">
+      <div class="flex justify-between items-center">
+        <label for="smoothingRange">Smoothing:</label>
+        <input id="smoothingRange" type="range" min="0" max="20" value="10" class="w-32">
+      </div>
+      <div class="flex justify-between items-center">
+        <label for="strokeWidthRange">Base Stroke Width:</label>
+        <input id="strokeWidthRange" type="range" min="1" max="50" value="20" class="w-32">
+      </div>
+      <div class="flex justify-between items-center">
+        <label for="blurRange">Blur:</label>
+        <input id="blurRange" type="range" min="0" max="2" step="0.1" value="0" class="w-32">
+      </div>
+       <div class="flex justify-between items-center">
+        <label for="contrastRange">Contrast:</label>
+        <input id="contrastRange" type="range" min="0" max="100" value="100" class="w-32">
+      </div>
+    </div>
+
+    <div id="predictionDisplay" class="text-2xl font-bold text-green-400 mt-4"></div>
+    <div id="errorDisplay" class="text-red-500 mt-2 text-center"></div>
+  </div>
+
+  <script>
+    paper.setup('drawingCanvas');
+    const tool = new paper.Tool();
+    const previewCtx = previewCanvas.getContext('2d');
+
+    let lastPath = null;
+    let strokeWidth = 20;
+    let smoothing = 10;
+    let blurAmount = 0;
+    let contrastAmount = 100;
+
+    function updatePreview() {
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCanvas.width = 28;
+      tempCanvas.height = 28;
+
+      tempCtx.fillStyle = 'white';
+      tempCtx.fillRect(0, 0, 28, 28);
+
+      let filters = '';
+      if (blurAmount > 0) filters += `blur(${blurAmount}px) `;
+      if (contrastAmount !== 100) filters += `contrast(${contrastAmount}%) `;
+
+      tempCtx.filter = filters.trim();
+
+      tempCtx.drawImage(drawingCanvas, 0, 0, 280, 280, 0, 0, 28, 28);
+
+      tempCtx.filter = 'none';
+
+      previewCtx.clearRect(0, 0, 28, 28);
+      previewCtx.drawImage(tempCanvas, 0, 0);
+    }
+
+    strokeWidthRange.addEventListener('input', (e) => {
+      strokeWidth = parseInt(e.target.value);
+      if (lastPath) {
+        lastPath.strokeWidth = strokeWidth;
+        paper.view.draw();
+        updatePreview();
+      }
+    });
+
+    smoothingRange.addEventListener('input', (e) => {
+      smoothing = parseInt(e.target.value);
+    });
+
+    blurRange.addEventListener('input', (e) => {
+      blurAmount = parseFloat(e.target.value);
+      updatePreview();
+    });
+
+    contrastRange.addEventListener('input', (e) => {
+      contrastAmount = parseInt(e.target.value);
+      updatePreview();
+    });
+
+    tool.onMouseDown = function(event) {
+      predictionDisplay.textContent = '';
+      errorDisplay.textContent = '';
+
+      path = new paper.Path({
+        segments: [event.point],
+        strokeColor: 'black',
+        strokeWidth: strokeWidth,
+        strokeCap: 'round',
+        strokeJoin: 'round'
+      });
+      lastPath = path;
+    };
+
+    tool.onMouseDrag = function(event) {
+      if (path) {
+        path.add(event.point);
+      }
+    };
+
+    tool.onMouseUp = function(event) {
+      if (path && smoothing > 0) {
+        path.simplify(smoothing);
+      }
+      updatePreview();
+    };
+
+    function getScaledImageData() {
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+
+      tempCanvas.width = 28;
+      tempCanvas.height = 28;
+
+      tempCtx.fillStyle = 'white';
+      tempCtx.fillRect(0, 0, 28, 28);
+
+      let filters = '';
+      if (blurAmount > 0) filters += `blur(${blurAmount}px) `;
+      if (contrastAmount !== 100) filters += `contrast(${contrastAmount}%) `;
+
+      tempCtx.filter = filters.trim();
+
+      tempCtx.drawImage(drawingCanvas, 0, 0, 280, 280, 0, 0, 28, 28);
+
+      tempCtx.filter = 'none';
+
+      const imageData = tempCtx.getImageData(0, 0, 28, 28);
+      const pixels = imageData.data;
+      const grayscaleImage = new Uint8Array(28 * 28);
+
+      for (let i = 0; i < pixels.length; i += 4) {
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        grayscaleImage[i / 4] = 255 - gray;
+      }
+
+      return grayscaleImage;
+    }
+
+    async function handlePredict() {
+      if (paper.project.activeLayer.children.length === 0) {
+        errorDisplay.textContent = 'Draw a digit before predicting.';
+        predictionDisplay.textContent = '';
+        return;
+      }
+
+      const grayscaleImageData = getScaledImageData();
+
+      const tempCanvasForDataUrl = document.createElement('canvas');
+      const tempCtxForDataUrl = tempCanvasForDataUrl.getContext('2d');
+      tempCanvasForDataUrl.width = 28;
+      tempCanvasForDataUrl.height = 28;
+
+      const imageDataForDataUrl = tempCtxForDataUrl.createImageData(28, 28);
+      for(let i = 0; i < grayscaleImageData.length; i++) {
+          const gray = 255 - grayscaleImageData[i];
+          imageDataForDataUrl.data[i * 4] = gray;
+          imageDataForDataUrl.data[i * 4 + 1] = gray;
+          imageDataForDataUrl.data[i * 4 + 2] = gray;
+          imageDataForDataUrl.data[i * 4 + 3] = 255;
+      }
+      tempCtxForDataUrl.putImageData(imageDataForDataUrl, 0, 0);
+      const imageDataUrl = tempCanvasForDataUrl.toDataURL('image/png');
+
+      predictButton.textContent = 'Predicting...';
+      errorDisplay.textContent = '';
+      predictionDisplay.textContent = '';
+
+      try {
+        const res = await fetch('http://localhost:5000/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: imageDataUrl })
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ message: 'Unknown server error' }));
+          throw new Error(`Prediction failed: Status ${res.status}. ${errorData.message || res.statusText}`);
+        }
+
+        const data = await res.json();
+
+        if (data.prediction !== undefined) {
+          predictionDisplay.textContent = `Prediction: ${data.prediction}`;
+        } else {
+          throw new Error('Unexpected response format from server.');
+        }
+      } catch (err) {
+        errorDisplay.textContent = `Error: ${err.message}`;
+        console.error(err);
+      } finally {
+        predictButton.textContent = 'Predict';
+      }
+    }
+
+    predictButton.addEventListener('click', handlePredict);
+
+    clearButton.addEventListener('click', () => {
+      paper.project.activeLayer.removeChildren();
+      paper.view.draw();
+      predictionDisplay.textContent = '';
+      errorDisplay.textContent = '';
+      lastPath = null;
+      updatePreview();
+    });
+
+    updatePreview();
+  </script>
+</body>
+</html>
+
