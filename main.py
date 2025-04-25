@@ -33,11 +33,14 @@ tester = CnnTester((28, 28), MeanSquaredError(), SequentialTester([
   DenseTester(10, NormalizeSquared()),
 ]), 'db8b2111e6fb98767e9335b691a23d4a')
 
-print("Loading model...")
-tester.load()
-tester.hash = 'test'
-print("Saving model...")
-tester.save()
+# trainer = tester.to_trainer()
+# trainer.train(mnist_test_iter, 1, 32, True)
+
+# print("Loading model...")
+# tester.load()
+# tester.hash = 'test'
+# print("Saving model...")
+# tester.save()
 
 print("Loading model...")
 tester.load()
