@@ -57,7 +57,6 @@
     </div>
 
     <span id="predictionDisplay" class="text-2xl font-bold text-green-400 mt-4"></span>
-    <span id="errorDisplay" class="text-red-500 mt-2 text-center"></span>
   </div>
 
   <script>
@@ -73,17 +72,15 @@
     let contrastAmount = 100;
 
     let inflight = false;
-    function lazyPredict() {
+    async function lazyPredict() {
       if (inflight) return;
       inflight = true;
-      setTimeout(() => {
-        try {
-          handlePredict();
-        } catch (err) {
-          console.error(err);
-        }
-        inflight = false;
-      }, 100);
+      try {
+        await handlePredict();
+      } catch (err) {
+        console.error(err);
+      }
+      inflight = false;
     }
     function updatePreview() {
       previewCtx.fillRect(0, 0, 28, 28);
@@ -113,9 +110,6 @@
     contrastRange.addEventListener('input', (e) => updateFilter(contrastAmount = parseInt(e.target.value)));
 
     tool.onMouseDown = function(event) {
-      // predictionDisplay.textContent = '';
-      errorDisplay.textContent = '';
-
       path = new paper.Path({
         segments: [event.point],
         strokeColor: 'black',
@@ -182,17 +176,11 @@
 
     async function handlePredict() {
       if (paper.project.activeLayer.children.length === 0) {
-        errorDisplay.textContent = 'Draw a digit before predicting.';
-        // predictionDisplay.textContent = '';
         return;
       }
 
       const grayscaleImageData = getGrayscaleImageData();
       printImageToConsole(grayscaleImageData);
-
-      predictButton.textContent = 'Predicting...';
-      errorDisplay.textContent = '';
-      // predictionDisplay.textContent = '';
 
       try {
         const res = await fetch('http://localhost:5000/predict', {
@@ -211,10 +199,7 @@
         const data = await res.json();
         predictionDisplay.textContent = `Predicted ${data.prediction} with confidence ${data.percentages[data.prediction].toFixed(2)}`;
       } catch (err) {
-        errorDisplay.textContent = `Error: ${err.message}`;
         console.error(err);
-      } finally {
-        predictButton.textContent = 'Predict';
       }
     }
 
@@ -223,8 +208,6 @@
     clearButton.addEventListener('click', () => {
       paper.project.activeLayer.removeChildren();
       paper.view.draw();
-      // predictionDisplay.textContent = '';
-      errorDisplay.textContent = '';
       lastPath = null;
       updatePreview();
     });
