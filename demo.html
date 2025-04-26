@@ -48,7 +48,7 @@
       </div>
       <div class="flex justify-between items-center">
         <label for="blurRange">Blur:</label>
-        <input id="blurRange" type="range" min="0" max="2" step="0.1" value="0" class="w-32">
+        <input id="blurRange" type="range" min="0" max="2" step="0.01" value="0" class="w-32">
       </div>
       <div class="flex justify-between items-center">
         <label for="contrastRange">Contrast:</label>
@@ -105,9 +105,18 @@
       updatePreview();
     });
 
-    smoothingRange.addEventListener('input', (e) => updatePreview(smoothing = parseInt(e.target.value)));
-    blurRange.addEventListener('input', (e) => updateFilter(blurAmount = parseFloat(e.target.value)));
-    contrastRange.addEventListener('input', (e) => updateFilter(contrastAmount = parseInt(e.target.value)));
+    smoothingRange.addEventListener('input', (e) => {
+      smoothing = parseFloat(e.target.value);
+      updatePreview();
+    });
+    blurRange.addEventListener('input', (e) => {
+      blurAmount = parseFloat(e.target.value);
+      updateFilter();
+    });
+    contrastRange.addEventListener('input', (e) => {
+      contrastAmount = parseFloat(e.target.value);
+      updateFilter();
+    });
 
     tool.onMouseDown = function(event) {
       path = new paper.Path({
