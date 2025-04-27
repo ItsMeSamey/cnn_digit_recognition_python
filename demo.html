@@ -40,15 +40,15 @@
     <div class="flex flex-col gap-3 w-full text-white mt-4">
       <div class="flex justify-between items-center">
         <label for="smoothingRange">Smoothing:</label>
-        <input id="smoothingRange" type="range" min="0" max="20" value="10" class="w-32">
+        <input id="smoothingRange" type="range" min="0" max="20" value="10" step="0.1" class="w-32">
       </div>
       <div class="flex justify-between items-center">
         <label for="strokeWidthRange">Base Stroke Width:</label>
-        <input id="strokeWidthRange" type="range" min="1" max="50" value="20" class="w-32">
+        <input id="strokeWidthRange" type="range" min="1" max="50" value="20" step="0.1" class="w-32">
       </div>
       <div class="flex justify-between items-center">
         <label for="blurRange">Blur:</label>
-        <input id="blurRange" type="range" min="0" max="2" step="0.01" value="0" class="w-32">
+        <input id="blurRange" type="range" min="0" max="2" value="0" step="0.01" class="w-32">
       </div>
       <div class="flex justify-between items-center">
         <label for="contrastRange">Contrast:</label>
@@ -84,7 +84,14 @@
     }
     function updatePreview() {
       previewCtx.fillRect(0, 0, 28, 28);
-      previewCtx.drawImage(drawingCanvas, 0, 0, 280, 280, 0, 0, 28, 28);
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = drawingCanvas.width;
+      tempCanvas.height = drawingCanvas.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.drawImage(drawingCanvas, 0, 0);
+      previewCtx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, 28, 28);
+
       lazyPredict();
     }
 
