@@ -109,8 +109,8 @@ class ConvolveTester(TestingLayerBase):
     self.bias = np.float64(0)
 
     # Calculate output dimensions
-    self.out_h = (input_h - filter_h) // self.stride_y + 1
-    self.out_w = (input_w - filter_w) // self.stride_x + 1
+    self.out_h = input_h // self.stride_y
+    self.out_w = input_w // self.stride_x
     if self.out_w * self.stride_x < input_w: self.out_w += 1
     if self.out_h * self.stride_y < input_h: self.out_h += 1
 
@@ -128,21 +128,25 @@ class ConvolveTester(TestingLayerBase):
     Returns:
       The output array after convolution and activation.
     """
-    filter_h, filter_w = self.filter.shape
     stride_y, stride_x = self.stride_y, self.stride_x
 
-    # Initialize output array
     output = np.zeros((self.out_h, self.out_w))
+    filter_y_half = self.filter_y // 2
+    filter_x_half = self.filter_x // 2
 
-    # Perform convolution
-    for i in range(self.out_h):
-      for j in range(self.out_w):
-        h_start = i * stride_y
-        h_end = h_start + filter_h
-        w_start = j * stride_x
-        w_end = w_start + filter_w
-        input_region = input_data[h_start:h_end, w_start:w_end]
-        output[i, j] = np.sum(input_region * self.filter[0:input_region.shape[0], 0: input_region.shape[1]]) + self.bias
+    for out_y in range(self.out_h):
+      for out_x in range(self.out_w):
+        sum_val = self.bias
+
+        for filter_y_offset in range(self.filter_y):
+          for filter_x_offset in range(self.filter_x):
+            effective_in_y = out_y * stride_y + filter_y_offset - filter_y_half
+            effective_in_x = out_x * stride_x + filter_x_offset - filter_x_half
+
+            if (0 <= effective_in_y < input_data.shape[0] and 0 <= effective_in_x < input_data.shape[1]):
+              sum_val += input_data[effective_in_y, effective_in_x] * self.filter[filter_y_offset, filter_x_offset]
+
+        output[out_y, out_x] = sum_val
 
     return output
 
@@ -248,51 +252,41 @@ class ConvolveTrainer(TrainingLayerBase):
       raise ValueError(f"Gradient d_next shape {d_next.shape} does not match expected output shape {(self.tester.out_h, self.tester.out_w)}.")
 
     d_output_convolve = self.tester.activation_function.backward(d_next, self.cached_input_to_activation, self.cached_activated_output)
+    self.bias_gradient += np.sum(d_output_convolve)
 
     # if d_output_convolve.shape != (self.tester.out_h, self.tester.out_w):
     #    raise RuntimeError(f"Activation backward returned gradient with incorrect shape {d_output_convolve.shape}, expected {(self.tester.out_h, self.tester.out_w)}.")
 
-    filter_h, filter_w = self.tester.filter.shape
     stride_y, stride_x = self.tester.stride_y, self.tester.stride_x
     input_data = self.cached_input
-    output_h, output_w = self.tester.out_h, self.tester.out_w # Shape of d_output_convolve
+    input_h, input_w = input_data.shape
 
-    d_filter = np.zeros_like(self.tester.filter, dtype=d_output_convolve.dtype)
-    for i in range(output_h):
-      for j in range(output_w):
-        h_start = i * stride_y
-        w_start = j * stride_x
-        input_region = input_data[h_start:h_start + filter_h, w_start:w_start + filter_w]
-        output_region = d_output_convolve[i, j]
-        if len(output_region.shape) == 0: continue
-        d_filter[:output_region.shape[0], :output_region.shape[1]] += output_region * input_region[:output_region.shape[0], :output_region.shape[1]]
+    filter_y_half = self.tester.filter_y // 2
+    filter_x_half = self.tester.filter_x // 2
 
-    d_bias = np.sum(d_output_convolve)
+    d_prev = np.zeros_like(self.cached_input, dtype=d_output_convolve.dtype)
 
-    self.filter_gradients += d_filter
-    self.bias_gradient += d_bias
+    for out_y in range(self.tester.out_h):
+      for out_x in range(self.tester.out_w):
+        sum_val = self.tester.bias
+
+        for filter_y_offset in range(self.tester.filter_y):
+          for filter_x_offset in range(self.tester.filter_x):
+            effective_in_y = out_y * stride_y + filter_y_offset - filter_y_half
+            effective_in_x = out_x * stride_x + filter_x_offset - filter_x_half
+
+            if (0 <= effective_in_y < input_h and 0 <= effective_in_x < input_w):
+              sum_val += d_output_convolve[out_y, out_x] * self.cached_input[effective_in_y, effective_in_x]
+
+            if calc_prev:
+              d_prev[effective_in_y, effective_in_x] += d_output_convolve[out_y, out_x] * self.tester.filter[filter_y_offset, filter_x_offset]
+
+        self.filter_gradients[out_y, out_x] += sum_val
 
     self.cached_input = None
     self.cached_input_to_activation = None
     self.cached_activated_output = None
     if not calc_prev: return
-
-    d_prev = np.zeros_like(input_data, dtype=d_output_convolve.dtype)
-    input_h, input_w = input_data.shape
-    filter = self.tester.filter
-
-    for i in range(output_h):
-      for j in range(output_w):
-        h_start = i * stride_y
-        w_start = j * stride_x
-
-        for fy in range(filter_h):
-          for fx in range(filter_w):
-            input_h_idx = h_start + fy
-            input_w_idx = w_start + fx
-
-            if input_h_idx < input_h and input_w_idx < input_w:
-              d_prev[input_h_idx, input_w_idx] += d_output_convolve[i, j] * filter[fy, fx]
 
     return d_prev
 
@@ -596,9 +590,11 @@ class SequentialTrainer(TrainingLayerBase):
     Returns:
       The gradient with respect to the input (d_prev) if calc_prev is True, otherwise None.
     """
+    nullable_d_next: np.ndarray | None = d_next
     for i in reversed(range(len(self.layers))):
       layer = self.layers[i]
-      d_next = layer.backward(d_next, calc_prev if i == 0 else True)
+      if nullable_d_next is None: raise RuntimeError("layer.backward returned None, even with calc_prev=True.")
+      nullable_d_next = layer.backward(nullable_d_next, calc_prev if i == 0 else True)
     return d_next
 
   def apply_gradient(self, learning_rate):
