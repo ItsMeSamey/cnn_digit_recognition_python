@@ -85,6 +85,9 @@
     function updatePreview() {
       previewCtx.fillRect(0, 0, 28, 28);
 
+      // If we dont create a new canvas, the filter will not work properly
+      // eg. the blur filter's slider will start to show staircase effect (as if it has 3 steps for eg)
+      // I dont know the reason for this bug but one solution is to create a new canvas
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = drawingCanvas.width;
       tempCanvas.height = drawingCanvas.height;
