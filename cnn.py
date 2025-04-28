@@ -12,15 +12,19 @@ def _parse_shape(info_str) -> tuple:
   raise ValueError(f"Unsupported format: {info_str}")
 
 def _read_f64_array(fp, offset, shape) -> np.ndarray:
+  print(offset, shape)
   fp.seek(offset)
+  to_read = 8 * np.prod(shape)
   buffer = fp.read(8 * np.prod(shape))
-  retval = np.frombuffer(buffer, dtype='=f8').reshape(shape)
+  if len(buffer) != to_read: raise ValueError(f"Expected to read {to_read} bytes, got {len(buffer)} at offset {offset}")
+  retval = np.frombuffer(buffer, dtype=np.float64).reshape(shape)
   return retval
 
 # this is a recursive operartion done iteratively to avoid stack overflow
 def _recursive_read_apply(fp, layer: TestingLayerBase, structure: dict):
   stack: list[tuple[TestingLayerBase, dict, int]] = [(layer, structure, 0)]
   while len(stack) != 0 :
+    print([(l[1]["name"], l[1]["offset"]) for l in stack])
     layer, structure, base_offset = stack.pop()
     name: str = structure["name"]
     offset: int = structure["offset"]
@@ -30,11 +34,12 @@ def _recursive_read_apply(fp, layer: TestingLayerBase, structure: dict):
       stack.append((layer.sublayer, structure, base_offset))
       continue
 
-    if name == "layer" or (name.isalnum() and isinstance(info, list) and len(info) == 1):
-      if not isinstance(info, list): raise ValueError(f"expected layer's info to be a list, got {info}")
+    if (name == "layer" or name.isalnum()) and isinstance(info, list) and len(info) == 1:
       if len(info) != 1: raise ValueError(f"expected info length to be 1, got: {len(info)}")
-      stack.append((layer, info[0], base_offset))
-    elif name == "sequential_merged_layers" or name == "parallel_merged_layers":
+      stack.append((layer, info[0], base_offset + offset))
+      continue
+
+    if name == "sequential_merged_layers" or name == "parallel_merged_layers":
       if name == "sequential_merged_layers": 
         if not isinstance(layer, SequentialTester): raise ValueError(f"expected SequentialTester, got {layer}")
       else:
@@ -42,12 +47,15 @@ def _recursive_read_apply(fp, layer: TestingLayerBase, structure: dict):
 
       if not isinstance(info, list): raise ValueError(f"expected a list, got {layer}")
       layers = []
-      for l in layer.layers:
-        if isinstance(l, FlattenTester): continue
-        layers.append(l)
+      if name == "sequential_merged_layers":
+        for l in layer.layers:
+          if isinstance(l, FlattenTester): continue
+          layers.append(l)
+      else:
+        layers = layer.layers
       if len(info) != len(layers): raise ValueError(f"length mismatch, json expects {len(info)} but layers have {len(layers)}")
-      for i in range(len(info)):
-        if int(info[i]["name"]) != i: raise ValueError(f"extend \"name\": {i} as name but got {info[i]}")
+      for i in reversed(range(len(info))):
+        if int(info[i]["name"]) != i: raise ValueError(f"expected \"name\": {i} but got {info[i]}")
         stack.append((layers[i], info[i], base_offset + offset))
     elif name.isalnum() and isinstance(info, list) and len(info) == 2 and isinstance(info[0]["info"], str) and isinstance(info[1]["info"], str):
       if (info[0]["name"] == "filter" and info[1]["name"] == "bias") or (info[1]["name"] == "filter" and info[0]["name"] == "bias"):
@@ -61,9 +69,11 @@ def _recursive_read_apply(fp, layer: TestingLayerBase, structure: dict):
         layer.weights = _read_f64_array(fp, base_offset + offset + info[0]["offset"], _parse_shape(info[0]["info"]))
         layer.biases = _read_f64_array(fp, base_offset + offset + info[1]["offset"], _parse_shape(info[1]["info"]))
       else:
-        raise ValueError(f"unknown value {structure}")
+        raise ValueError(f"unknown value {structure} for {layer}")
+      print(f"offsets: base: {base_offset}, offset: {offset}")
+      print(f"info: {info}")
     else:
-      raise ValueError(f"unknown value {structure}")
+      raise ValueError(f"unknown value {structure} for {layer}")
 
 def _stringify_shape(shape: tuple) -> str:
   return "[" + "][".join(map(str, shape)) + "]" + "f64"
@@ -154,15 +164,15 @@ class CnnTester:
       _recursive_read_apply(f, self.layer, model_structure[0])
 
   def predict(self, image: np.ndarray) -> np.ndarray:
-    return self.layer.forward(image)
+    return self.layer.forward(image / 255.0)
 
   def test(self, iterator, verbose: bool = False) -> float:
     correct = 0
     incorrect = 0
     for image, label in iterator:
-      result = self.layer.forward(image)
+      result = self.predict(image)
       max_idx = np.argmax(result)
-      if verbose: print(f"prediction: {max_idx}, label: {label}")
+      if verbose: print(f"{label} -> {max_idx}: {result[max_idx]*100:.2f}")
       if label == max_idx:
         correct += 1
       else:
@@ -183,7 +193,7 @@ class CnnTrainer:
   def train(self, iterator, learning_rate: int, batch_size: int, verbose: bool = False):
     n = 0
     for image, label in iterator:
-      predictions = self.layer.forward(image)
+      predictions = self.layer.forward(image / 255.0)
       if verbose: print(f"({label} -> {np.argmax(predictions)}) = {self.loss_gen.forward(predictions, label)*100:.3f}")
       self.layer.backward(self.loss_gen.backward(predictions, label), False)
       n += 1

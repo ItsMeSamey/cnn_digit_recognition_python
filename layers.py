@@ -133,20 +133,14 @@ class ConvolveTester(TestingLayerBase):
     output = np.zeros((self.out_h, self.out_w))
     filter_y_half = self.filter_y // 2
     filter_x_half = self.filter_x // 2
+    input_data = np.pad(input_data, ((filter_y_half, filter_y_half), (filter_x_half, filter_x_half)), 'constant', constant_values=0)
 
     for out_y in range(self.out_h):
       for out_x in range(self.out_w):
-        sum_val = self.bias
-
-        for filter_y_offset in range(self.filter_y):
-          for filter_x_offset in range(self.filter_x):
-            effective_in_y = out_y * stride_y + filter_y_offset - filter_y_half
-            effective_in_x = out_x * stride_x + filter_x_offset - filter_x_half
-
-            if (0 <= effective_in_y < input_data.shape[0] and 0 <= effective_in_x < input_data.shape[1]):
-              sum_val += input_data[effective_in_y, effective_in_x] * self.filter[filter_y_offset, filter_x_offset]
-
-        output[out_y, out_x] = sum_val
+        in_y_start = out_y * stride_y
+        in_x_start = out_x * stride_x
+        input_region = input_data[in_y_start : in_y_start + self.filter_y, in_x_start : in_x_start + self.filter_x]
+        output[out_y, out_x] = np.sum(input_region * self.filter) + self.bias
 
     return output
 

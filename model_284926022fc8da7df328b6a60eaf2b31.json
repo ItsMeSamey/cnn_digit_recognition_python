@@ -1,0 +1,641 @@
+[{
+  "name": "layer",
+  "offset": 0,
+  "info": [{
+    "name": "sequential_merged_layers",
+    "offset": 0,
+    "info": [{
+      "name": "0",
+      "offset": 0,
+      "info": [{
+        "name": "layer",
+        "offset": 0,
+        "info": [{
+          "name": "parallel_merged_layers",
+          "offset": 0,
+          "info": [{
+            "name": "0",
+            "offset": 0,
+            "info": [{
+              "name": "sequential_merged_layers",
+              "offset": 0,
+              "info": [{
+                "name": "0",
+                "offset": 0,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[4][4]f64"
+                },{
+                  "name": "bias",
+                  "offset": 128,
+                  "info": "f64"
+                }]
+              },{
+                "name": "1",
+                "offset": 136,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[2][2]f64"
+                },{
+                  "name": "bias",
+                  "offset": 32,
+                  "info": "f64"
+                }]
+              },{
+                "name": "2",
+                "offset": 176,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[49][196]f64"
+                },{
+                  "name": "biases",
+                  "offset": 76832,
+                  "info": "[49]f64"
+                }]
+              },{
+                "name": "3",
+                "offset": 77400,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[10][49]f64"
+                },{
+                  "name": "biases",
+                  "offset": 3920,
+                  "info": "[10]f64"
+                }]
+              }]
+            }]
+          },{
+            "name": "1",
+            "offset": 81400,
+            "info": [{
+              "name": "sequential_merged_layers",
+              "offset": 0,
+              "info": [{
+                "name": "0",
+                "offset": 0,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[4][4]f64"
+                },{
+                  "name": "bias",
+                  "offset": 128,
+                  "info": "f64"
+                }]
+              },{
+                "name": "1",
+                "offset": 136,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[2][2]f64"
+                },{
+                  "name": "bias",
+                  "offset": 32,
+                  "info": "f64"
+                }]
+              },{
+                "name": "2",
+                "offset": 176,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[49][196]f64"
+                },{
+                  "name": "biases",
+                  "offset": 76832,
+                  "info": "[49]f64"
+                }]
+              },{
+                "name": "3",
+                "offset": 77400,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[10][49]f64"
+                },{
+                  "name": "biases",
+                  "offset": 3920,
+                  "info": "[10]f64"
+                }]
+              }]
+            }]
+          },{
+            "name": "2",
+            "offset": 162800,
+            "info": [{
+              "name": "sequential_merged_layers",
+              "offset": 0,
+              "info": [{
+                "name": "0",
+                "offset": 0,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[4][4]f64"
+                },{
+                  "name": "bias",
+                  "offset": 128,
+                  "info": "f64"
+                }]
+              },{
+                "name": "1",
+                "offset": 136,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[2][2]f64"
+                },{
+                  "name": "bias",
+                  "offset": 32,
+                  "info": "f64"
+                }]
+              },{
+                "name": "2",
+                "offset": 176,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[49][196]f64"
+                },{
+                  "name": "biases",
+                  "offset": 76832,
+                  "info": "[49]f64"
+                }]
+              },{
+                "name": "3",
+                "offset": 77400,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[10][49]f64"
+                },{
+                  "name": "biases",
+                  "offset": 3920,
+                  "info": "[10]f64"
+                }]
+              }]
+            }]
+          },{
+            "name": "3",
+            "offset": 244200,
+            "info": [{
+              "name": "sequential_merged_layers",
+              "offset": 0,
+              "info": [{
+                "name": "0",
+                "offset": 0,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[4][4]f64"
+                },{
+                  "name": "bias",
+                  "offset": 128,
+                  "info": "f64"
+                }]
+              },{
+                "name": "1",
+                "offset": 136,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[2][2]f64"
+                },{
+                  "name": "bias",
+                  "offset": 32,
+                  "info": "f64"
+                }]
+              },{
+                "name": "2",
+                "offset": 176,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[49][196]f64"
+                },{
+                  "name": "biases",
+                  "offset": 76832,
+                  "info": "[49]f64"
+                }]
+              },{
+                "name": "3",
+                "offset": 77400,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[10][49]f64"
+                },{
+                  "name": "biases",
+                  "offset": 3920,
+                  "info": "[10]f64"
+                }]
+              }]
+            }]
+          },{
+            "name": "4",
+            "offset": 325600,
+            "info": [{
+              "name": "sequential_merged_layers",
+              "offset": 0,
+              "info": [{
+                "name": "0",
+                "offset": 0,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[4][4]f64"
+                },{
+                  "name": "bias",
+                  "offset": 128,
+                  "info": "f64"
+                }]
+              },{
+                "name": "1",
+                "offset": 136,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[2][2]f64"
+                },{
+                  "name": "bias",
+                  "offset": 32,
+                  "info": "f64"
+                }]
+              },{
+                "name": "2",
+                "offset": 176,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[49][196]f64"
+                },{
+                  "name": "biases",
+                  "offset": 76832,
+                  "info": "[49]f64"
+                }]
+              },{
+                "name": "3",
+                "offset": 77400,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[10][49]f64"
+                },{
+                  "name": "biases",
+                  "offset": 3920,
+                  "info": "[10]f64"
+                }]
+              }]
+            }]
+          },{
+            "name": "5",
+            "offset": 407000,
+            "info": [{
+              "name": "sequential_merged_layers",
+              "offset": 0,
+              "info": [{
+                "name": "0",
+                "offset": 0,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[4][4]f64"
+                },{
+                  "name": "bias",
+                  "offset": 128,
+                  "info": "f64"
+                }]
+              },{
+                "name": "1",
+                "offset": 136,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[2][2]f64"
+                },{
+                  "name": "bias",
+                  "offset": 32,
+                  "info": "f64"
+                }]
+              },{
+                "name": "2",
+                "offset": 176,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[49][196]f64"
+                },{
+                  "name": "biases",
+                  "offset": 76832,
+                  "info": "[49]f64"
+                }]
+              },{
+                "name": "3",
+                "offset": 77400,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[10][49]f64"
+                },{
+                  "name": "biases",
+                  "offset": 3920,
+                  "info": "[10]f64"
+                }]
+              }]
+            }]
+          },{
+            "name": "6",
+            "offset": 488400,
+            "info": [{
+              "name": "sequential_merged_layers",
+              "offset": 0,
+              "info": [{
+                "name": "0",
+                "offset": 0,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[4][4]f64"
+                },{
+                  "name": "bias",
+                  "offset": 128,
+                  "info": "f64"
+                }]
+              },{
+                "name": "1",
+                "offset": 136,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[2][2]f64"
+                },{
+                  "name": "bias",
+                  "offset": 32,
+                  "info": "f64"
+                }]
+              },{
+                "name": "2",
+                "offset": 176,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[49][196]f64"
+                },{
+                  "name": "biases",
+                  "offset": 76832,
+                  "info": "[49]f64"
+                }]
+              },{
+                "name": "3",
+                "offset": 77400,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[10][49]f64"
+                },{
+                  "name": "biases",
+                  "offset": 3920,
+                  "info": "[10]f64"
+                }]
+              }]
+            }]
+          },{
+            "name": "7",
+            "offset": 569800,
+            "info": [{
+              "name": "sequential_merged_layers",
+              "offset": 0,
+              "info": [{
+                "name": "0",
+                "offset": 0,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[4][4]f64"
+                },{
+                  "name": "bias",
+                  "offset": 128,
+                  "info": "f64"
+                }]
+              },{
+                "name": "1",
+                "offset": 136,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[2][2]f64"
+                },{
+                  "name": "bias",
+                  "offset": 32,
+                  "info": "f64"
+                }]
+              },{
+                "name": "2",
+                "offset": 176,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[49][196]f64"
+                },{
+                  "name": "biases",
+                  "offset": 76832,
+                  "info": "[49]f64"
+                }]
+              },{
+                "name": "3",
+                "offset": 77400,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[10][49]f64"
+                },{
+                  "name": "biases",
+                  "offset": 3920,
+                  "info": "[10]f64"
+                }]
+              }]
+            }]
+          },{
+            "name": "8",
+            "offset": 651200,
+            "info": [{
+              "name": "sequential_merged_layers",
+              "offset": 0,
+              "info": [{
+                "name": "0",
+                "offset": 0,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[4][4]f64"
+                },{
+                  "name": "bias",
+                  "offset": 128,
+                  "info": "f64"
+                }]
+              },{
+                "name": "1",
+                "offset": 136,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[2][2]f64"
+                },{
+                  "name": "bias",
+                  "offset": 32,
+                  "info": "f64"
+                }]
+              },{
+                "name": "2",
+                "offset": 176,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[49][196]f64"
+                },{
+                  "name": "biases",
+                  "offset": 76832,
+                  "info": "[49]f64"
+                }]
+              },{
+                "name": "3",
+                "offset": 77400,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[10][49]f64"
+                },{
+                  "name": "biases",
+                  "offset": 3920,
+                  "info": "[10]f64"
+                }]
+              }]
+            }]
+          },{
+            "name": "9",
+            "offset": 732600,
+            "info": [{
+              "name": "sequential_merged_layers",
+              "offset": 0,
+              "info": [{
+                "name": "0",
+                "offset": 0,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[4][4]f64"
+                },{
+                  "name": "bias",
+                  "offset": 128,
+                  "info": "f64"
+                }]
+              },{
+                "name": "1",
+                "offset": 136,
+                "info": [{
+                  "name": "filter",
+                  "offset": 0,
+                  "info": "[2][2]f64"
+                },{
+                  "name": "bias",
+                  "offset": 32,
+                  "info": "f64"
+                }]
+              },{
+                "name": "2",
+                "offset": 176,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[49][196]f64"
+                },{
+                  "name": "biases",
+                  "offset": 76832,
+                  "info": "[49]f64"
+                }]
+              },{
+                "name": "3",
+                "offset": 77400,
+                "info": [{
+                  "name": "weights",
+                  "offset": 0,
+                  "info": "[10][49]f64"
+                },{
+                  "name": "biases",
+                  "offset": 3920,
+                  "info": "[10]f64"
+                }]
+              }]
+            }]
+          }]
+        }]
+      }]
+    },{
+      "name": "1",
+      "offset": 814000,
+      "info": [{
+        "name": "weights",
+        "offset": 0,
+        "info": "[100][100]f64"
+      },{
+        "name": "biases",
+        "offset": 80000,
+        "info": "[100]f64"
+      }]
+    },{
+      "name": "2",
+      "offset": 894800,
+      "info": [{
+        "name": "weights",
+        "offset": 0,
+        "info": "[100][100]f64"
+      },{
+        "name": "biases",
+        "offset": 80000,
+        "info": "[100]f64"
+      }]
+    },{
+      "name": "3",
+      "offset": 975600,
+      "info": [{
+        "name": "weights",
+        "offset": 0,
+        "info": "[50][100]f64"
+      },{
+        "name": "biases",
+        "offset": 40000,
+        "info": "[50]f64"
+      }]
+    },{
+      "name": "4",
+      "offset": 1016000,
+      "info": [{
+        "name": "weights",
+        "offset": 0,
+        "info": "[50][50]f64"
+      },{
+        "name": "biases",
+        "offset": 20000,
+        "info": "[50]f64"
+      }]
+    },{
+      "name": "5",
+      "offset": 1036400,
+      "info": [{
+        "name": "weights",
+        "offset": 0,
+        "info": "[10][50]f64"
+      },{
+        "name": "biases",
+        "offset": 4000,
+        "info": "[10]f64"
+      }]
+    }]
+  }]
+}]
