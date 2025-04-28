@@ -260,22 +260,20 @@ class ConvolveTrainer(TrainingLayerBase):
 
     d_prev = np.zeros_like(self.cached_input, dtype=d_output_convolve.dtype)
 
+    if (d_output_convolve.shape != (self.tester.out_h, self.tester.out_w)):
+      raise RuntimeError(f"Activation backward returned gradient with incorrect shape {d_output_convolve.shape}, expected {(self.tester.out_h, self.tester.out_w)}.")
+
     for out_y in range(self.tester.out_h):
       for out_x in range(self.tester.out_w):
-        sum_val = self.tester.bias
-
         for filter_y_offset in range(self.tester.filter_y):
           for filter_x_offset in range(self.tester.filter_x):
-            effective_in_y = out_y * stride_y + filter_y_offset - filter_y_half
-            effective_in_x = out_x * stride_x + filter_x_offset - filter_x_half
-
-            if (0 <= effective_in_y < input_h and 0 <= effective_in_x < input_w):
-              sum_val += d_output_convolve[out_y, out_x] * self.cached_input[effective_in_y, effective_in_x]
-
-            if calc_prev:
-              d_prev[effective_in_y, effective_in_x] += d_output_convolve[out_y, out_x] * self.tester.filter[filter_y_offset, filter_x_offset]
-
-        self.filter_gradients[out_y, out_x] += sum_val
+            in_y_offset = out_y * stride_y + filter_y_offset;
+            in_x_offset = out_x * stride_x + filter_x_offset;
+            if (in_y_offset >= filter_y_half and in_x_offset >= filter_x_half and in_y_offset - filter_y_half < input_h and in_x_offset - filter_x_half < input_w):
+              in_y = in_y_offset - filter_y_half
+              in_x = in_x_offset - filter_x_half
+              self.filter_gradients[filter_y_offset, filter_x_offset] += d_output_convolve[out_y, out_x] * self.cached_input[in_y, in_x]
+              if calc_prev: d_prev[in_y, in_x] += d_output_convolve[out_y, out_x] * self.tester.filter[filter_y_offset, filter_x_offset]
 
     self.cached_input = None
     self.cached_input_to_activation = None
