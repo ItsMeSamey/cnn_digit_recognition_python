@@ -1,6 +1,9 @@
 import struct
+from typing import Iterable
 import numpy as np
 import os
+
+import random
 
 # --- Custom Exceptions ---
 class MnistError(Exception):
@@ -70,10 +73,6 @@ class MnistIterator:
     self.count = num_images
     self._index = 0
 
-  def __len__(self) -> int:
-    """Returns the total number of items in the dataset."""
-    return self.count
-
   def __getitem__(self, index: int) -> tuple[np.ndarray, int]:
     """
     Allows accessing items by index.
@@ -116,6 +115,10 @@ class MnistIterator:
     else:
       raise StopIteration
 
+  def __len__(self) -> int:
+    """Returns the total number of items in the dataset."""
+    return self.count
+
   def shuffle(self) -> None:
     """
     Shuffles the dataset (images and labels together) in place.
@@ -129,9 +132,91 @@ class MnistIterator:
     self.images = self.images[indices]
     self.labels = self.labels[indices]
 
-  def has_next(self) -> bool:
-    """Checks if there are more items to iterate over sequentially."""
-    return self._index < self.count
+class RandomMnistIterator:
+  """
+  Iterates over a dataset (like MNIST) yielding a specified number of random samples.
+
+  Handles its own random number generation internally.
+  """
+  def __init__(self, underlying, num_items: int):
+    """
+    Initializes the random iterator.
+
+    Args:
+      mnist_iterator (MnistIterator): The MnistIterator instance to draw samples from.
+      num_items (int): The number of random items to iterate over.
+    """
+    self.underlying = underlying
+    self.total_count = len(underlying)
+    self.initial_count = num_items
+    self.remaining = num_items
+
+  def __iter__(self):
+    """Makes the object iterable. Resets the remaining count."""
+    self.remaining = self.initial_count
+    return self
+
+  def __next__(self) -> tuple[np.ndarray, int]:
+    """
+    Returns the next random item.
+
+    Returns:
+      tuple[np.ndarray, int]: A randomly selected (image, label) tuple.
+
+    Raises:
+      StopIteration: When the specified number of random items have been yielded.
+    """
+    if self.remaining == 0:
+      raise StopIteration
+    self.remaining -= 1
+    return self.underlying[random.randint(0, self.total_count - 1)]
+
+  def __len__(self) -> int:
+    """Returns the total number of items in the dataset."""
+    return self.initial_count
+
+class EqualizedIterator:
+  def __init__(self, underlying):
+    self._underlying = underlying
+    self.labels_counts = [0] * 10
+
+  def __iter__(self):
+    self.iterator = iter(self._underlying)
+    self.underlying_done = False
+    self.done = False
+    self.labels_counts = [0] * 10
+    return self
+
+  def __next__(self) -> tuple[np.ndarray, int]:
+    if self.done: raise StopIteration
+    if self.underlying_done:
+      while True:
+        try:
+          retval = next(self.iterator)
+          if self.labels_counts[retval[1]] != 0:
+            self.labels_counts[retval[1]] -= 1
+            if max(self.labels_counts) == 0:
+              self.done = True
+            return retval
+        except StopIteration:
+          self.iterator = iter(self._underlying)
+          continue
+
+    try:
+      value = next(self.iterator)
+      self.labels_counts[value[1]] += 1
+      return value
+    except StopIteration:
+      self.underlying_done = True
+      minval = min(self.labels_counts)
+      self.labels_counts = [l - minval for l in self.labels_counts]
+      if max(self.labels_counts) == 0:
+        self.done = True
+        raise StopIteration
+      return next(self)
+
+  def __len__(self):
+    return len(self.iterator)
 
 class InvalidImageError(MnistError):
   """Error for invalid file format or structure."""
@@ -165,7 +250,6 @@ def print_image(image: np.ndarray) -> None:
 
   for row_indices in char_indices:
     print("".join(ascii_chars[i] for i in row_indices))
-
 
 dataset_dir = "dataset"
 train_images_path = os.path.join(dataset_dir, "train-images.idx3-ubyte")
