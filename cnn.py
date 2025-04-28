@@ -12,7 +12,6 @@ def _parse_shape(info_str) -> tuple:
   raise ValueError(f"Unsupported format: {info_str}")
 
 def _read_f64_array(fp, offset, shape) -> np.ndarray:
-  print(offset, shape)
   fp.seek(offset)
   to_read = 8 * np.prod(shape)
   buffer = fp.read(8 * np.prod(shape))
@@ -24,7 +23,6 @@ def _read_f64_array(fp, offset, shape) -> np.ndarray:
 def _recursive_read_apply(fp, layer: TestingLayerBase, structure: dict):
   stack: list[tuple[TestingLayerBase, dict, int]] = [(layer, structure, 0)]
   while len(stack) != 0 :
-    print([(l[1]["name"], l[1]["offset"]) for l in stack])
     layer, structure, base_offset = stack.pop()
     name: str = structure["name"]
     offset: int = structure["offset"]
@@ -70,8 +68,6 @@ def _recursive_read_apply(fp, layer: TestingLayerBase, structure: dict):
         layer.biases = _read_f64_array(fp, base_offset + offset + info[1]["offset"], _parse_shape(info[1]["info"]))
       else:
         raise ValueError(f"unknown value {structure} for {layer}")
-      print(f"offsets: base: {base_offset}, offset: {offset}")
-      print(f"info: {info}")
     else:
       raise ValueError(f"unknown value {structure} for {layer}")
 
