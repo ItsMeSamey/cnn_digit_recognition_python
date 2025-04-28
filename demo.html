@@ -213,7 +213,7 @@
         }
 
         const data = await res.json();
-        predictionDisplay.textContent = `Predicted ${data.prediction} with confidence ${data.percentages[data.prediction].toFixed(2)}`;
+        predictionDisplay.textContent = `Predicted ${data.prediction} with confidence ${(data.percentages[data.prediction]*100).toFixed(2)}`;
       } catch (err) {
         console.error(err);
       }
