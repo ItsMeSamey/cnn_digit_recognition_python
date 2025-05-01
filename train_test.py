@@ -1,4 +1,4 @@
-from cnn import CnnTester
+from cnn import CnnTester, print_test_results
 from functions_activate import NormalizeSquared, PReLU
 from functions_loss import MeanSquaredError
 from layers import ConvolveTester, DenseTester, FlattenTester, LRFnWrappedTester, ParallelTester, SequentialTester
@@ -71,6 +71,6 @@ if __name__ == '__main__':
   # tester.save()
   # tester.load()
   print("Testing...")
-  accuracy = tester.test(mnist_test_iter, True)
-  print("Accuracy: %.2f%%" % (accuracy*100))
+  results = tester.test(mnist_test_iter, True)
+  print_test_results(results)
 

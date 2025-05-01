@@ -1,5 +1,4 @@
 import os
-from sys import setswitchinterval
 import numpy as np
 from functions_loss import LossFunctionBase
 from layers import ConvolveTester, DenseTester, FlattenTester, LRFnWrappedTester, ParallelTester, SequentialTester, TestingLayerBase, TrainingLayerBase
@@ -162,18 +161,14 @@ class CnnTester:
   def predict(self, image: np.ndarray) -> np.ndarray:
     return self.layer.forward(image / 255.0)
 
-  def test(self, iterator, verbose: bool = False) -> float:
-    correct = 0
-    incorrect = 0
+  def test(self, iterator, verbose: bool = False) -> np.ndarray:
+    retmatrix = np.zeros((10, 10))
     for image, label in iterator:
       result = self.predict(image)
       max_idx = np.argmax(result)
       if verbose: print(f"{label} -> {max_idx}: {result[max_idx]*100:.2f}")
-      if label == max_idx:
-        correct += 1
-      else:
-        incorrect += 1
-    return correct / (correct + incorrect)
+      retmatrix[label][max_idx] += 1
+    return retmatrix
 
 class CnnTrainer:
   def __init__(self, input_shape: tuple, loss_gen: LossFunctionBase, layer: TrainingLayerBase, hash: str):
@@ -197,4 +192,133 @@ class CnnTrainer:
         self.layer.apply_gradient(learning_rate)
         n = 0
     if n > 0: self.layer.apply_gradient(learning_rate)
+
+
+def print_test_results(results):
+  """
+  Calculates and prints confusion matrix, per-class, and overall metrics.
+
+  Args:
+    results: A 2D list or NumPy array representing the confusion matrix.
+      results[i][j] is the number of samples of actual class i
+      that were predicted as class j.
+  """
+  total_samples = 0
+  for row in results:
+    for count in row:
+      total_samples += count
+
+  if total_samples == 0:
+    print("No test results available.")
+    return
+
+  print(f"Total Samples: {total_samples}\n")
+
+  # Get number of classes (assuming square matrix)
+  num_classes = len(results)
+  if num_classes == 0:
+    print("Confusion matrix is empty.")
+    return
+  if any(len(row) != num_classes for row in results):
+    print("Confusion matrix must be square.")
+    return
+
+  # Print Confusion Matrix
+  print("Confusion Matrix (Actual vs Predicted):")
+  print("    ", end="")
+  for j in range(num_classes):
+    print(f"{j:>5}", end="")
+  print("\n  " + "------" * num_classes)
+
+  for i in range(num_classes):
+    print(f" {i:>5}|", end="")
+    for j in range(num_classes):
+      print(f"{results[i][j]:>5}", end="")
+    print()
+  print("\n")
+
+  # Calculate per-class metrics
+  tps = [0] * num_classes
+  fns = [0] * num_classes
+  fps = [0] * num_classes
+  tns = [0] * num_classes
+
+  per_class_precision = [0.0] * num_classes
+  per_class_recall = [0.0] * num_classes
+  per_class_f1 = [0.0] * num_classes
+  per_class_fpr = [0.0] * num_classes
+
+  macro_precision_sum = 0.0
+  macro_recall_sum = 0.0
+  macro_f1_sum = 0.0
+  macro_fpr_sum = 0.0
+
+  total_tp = 0
+  total_fp = 0
+  total_fn = 0
+
+  for i in range(num_classes):
+    # True Positives: Diagonal elements
+    tps[i] = results[i][i]
+
+    # False Negatives: Sum of elements in the row excluding the diagonal
+    fn_sum = 0
+    for j in range(num_classes):
+      if i != j:
+        fn_sum += results[i][j]
+    fns[i] = fn_sum
+
+    # False Positives: Sum of elements in the column excluding the diagonal
+    fp_sum = 0
+    for k in range(num_classes):
+      if i != k:
+        fp_sum += results[k][i]
+    fps[i] = fp_sum
+
+    # True Negatives: Total samples minus TP, FN, and FP for this class
+    tns[i] = total_samples - tps[i] - fns[i] - fps[i]
+
+    # Calculate per-class metrics (handle division by zero)
+    per_class_precision[i] = tps[i] / (tps[i] + fps[i]) if (tps[i] + fps[i]) > 0 else 0.0
+    per_class_recall[i] = tps[i] / (tps[i] + fns[i]) if (tps[i] + fns[i]) > 0 else 0.0
+    per_class_fpr[i] = fps[i] / (fps[i] + tns[i]) if (fps[i] + tns[i]) > 0 else 0.0
+
+    p_plus_r = per_class_precision[i] + per_class_recall[i]
+    per_class_f1[i] = 2.0 * (per_class_precision[i] * per_class_recall[i]) / p_plus_r if p_plus_r > 0 else 0.0
+
+    # Accumulate for macro averages
+    macro_precision_sum += per_class_precision[i]
+    macro_recall_sum += per_class_recall[i]
+    macro_f1_sum += per_class_f1[i]
+    macro_fpr_sum += per_class_fpr[i]
+
+    # Accumulate for overall metrics
+    total_tp += tps[i]
+    total_fp += fps[i]
+    total_fn += fns[i]
+
+  # Calculate overall metrics
+  overall_accuracy = total_tp / total_samples if total_samples > 0 else 0.0
+
+  macro_precision = macro_precision_sum / num_classes if num_classes > 0 else 0.0
+  macro_recall = macro_recall_sum / num_classes if num_classes > 0 else 0.0
+  macro_f1 = macro_f1_sum / num_classes if num_classes > 0 else 0.0
+  macro_fpr = macro_fpr_sum / num_classes if num_classes > 0 else 0.0
+
+  # Print Overall Metrics
+  print("Overall Metrics:")
+  print(f"  Accuracy: {overall_accuracy * 100.0:.2f}%")
+  print(f"  Macro Avg Precision: {macro_precision * 100.0:.2f}%")
+  print(f"  Macro Avg Recall (TPR): {macro_recall * 100.0:.2f}%")
+  print(f"  Macro Avg F1-Score: {macro_f1 * 100.0:.2f}%")
+  print(f"  Macro Avg FPR: {macro_fpr * 100.0:.2f}%")
+  print("\n")
+
+  # Print Per-Class Metrics
+  print("Per-Class Metrics:")
+  print(" Class |   TP  |   FN  |   FP  |   TN  | Precision% |  Recall% | F1-Score% |  FPR%  ")
+  print("-------|-------|-------|-------|-------|------------|----------|-----------|--------")
+  for i in range(num_classes):
+    print(f" {i:<4} | {tps[i]:>5} | {fns[i]:>5} | {fps[i]:>5} | {tns[i]:>5} | {per_class_precision[i] * 100.0:>10.2f} | {per_class_recall[i] * 100.0:>8.2f} | {per_class_f1[i] * 100.0:>9.2f} | {per_class_fpr[i] * 100.0:>6.2f}")
+  print("\n")
 

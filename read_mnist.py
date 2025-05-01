@@ -223,19 +223,20 @@ class MutatorWrapped:
   def __init__(self, underlying, all_mutations: bool=True):
     self.underlying = underlying
     self.all_mutations = all_mutations
+    self.mutator = None
 
   def __iter__(self):
     self.iterator = iter(self.underlying)
-    self.mutator = ImageMutator(self.underlying[0])
-    self.mutator.randomlyMutate(self.all_mutations)
+    return self
 
-  def __next__(self):
-    if self.mutator.images:
-      return self.mutator.images.pop()
-    else:
-      self.mutator = ImageMutator(next(self.iterator))
+  def __next__(self) -> tuple[np.ndarray, int]:
+    if not self.mutator or not self.mutator.images:
+      image, self.last_label = next(self.iterator)
+      self.mutator = ImageMutator(image)
       self.mutator.randomlyMutate(self.all_mutations)
-      return self.mutator.images.pop()
+      return (self.mutator.images.pop(), self.last_label)
+    else:
+      return (self.mutator.images.pop(), self.last_label)
 
 class InvalidImageError(MnistError):
   """Error for invalid file format or structure."""
