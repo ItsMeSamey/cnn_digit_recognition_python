@@ -1,7 +1,7 @@
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import numpy as np
-from train_test import tester
+from main import tester
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
   def _set_headers(self, code=200):
@@ -31,8 +31,8 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
 
       self._set_headers(200)
       self.wfile.write(json.dumps({
-        'percentages': predictions,
-        'prediction': np.argmax(predictions)
+        'percentages': list(predictions),
+        'prediction': int(np.argmax(predictions)),
       }).encode())
 
     except Exception as e:
