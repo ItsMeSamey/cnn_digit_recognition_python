@@ -186,7 +186,7 @@ class CnnTrainer:
   def to_tester(self) -> 'CnnTester':
     return CnnTester(self.input_shape, self.loss_gen, self.layer.to_tester(), self.hash)
 
-  def train(self, iterator, learning_rate: int, batch_size: int, verbose: bool = False):
+  def train(self, iterator, learning_rate: float, batch_size: int, verbose: bool = False):
     n = 0
     for image, label in iterator:
       predictions = self.layer.forward(image / 255.0)

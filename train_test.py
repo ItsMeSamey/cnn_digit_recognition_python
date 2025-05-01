@@ -2,7 +2,7 @@ from cnn import CnnTester
 from functions_activate import NormalizeSquared, PReLU
 from functions_loss import MeanSquaredError
 from layers import ConvolveTester, DenseTester, FlattenTester, LRFnWrappedTester, ParallelTester, SequentialTester
-from read_mnist import EqualizedIterator, RandomMnistIterator, mnist_test_iter, mnist_train_iter
+from read_mnist import EqualizedIterator, MutatorWrapped, RandomMnistIterator, mnist_test_iter, mnist_train_iter
 
 nnlayer = lambda _: SequentialTester([
   ConvolveTester(4, 4, 1, 1, PReLU(0.125)),
@@ -41,9 +41,28 @@ if not exists:
   else:
     trainer = tester.to_trainer()
     for i in range(9):
+      random_iter = RandomMnistIterator(mnist_train_iter, mnist_train_iter.count*4*(i+1))
+      mutator = MutatorWrapped(random_iter)
+      equalized = EqualizedIterator(mutator)
+      trainer.train(equalized, 1 / pow(2, i), mnist_train_iter.count // (10*(i+1)*(i+1)), True)
+
+    for i in range(8):
       random_iter = RandomMnistIterator(mnist_train_iter, mnist_train_iter.count*10*(i+1))
       equalized = EqualizedIterator(random_iter)
       trainer.train(equalized, 1 / pow(2, i), mnist_train_iter.count // (10*(i+1)*(i+1)), True)
+
+    for i in range(9):
+      random_iter = RandomMnistIterator(mnist_train_iter, mnist_train_iter.count*2)
+      mutator = MutatorWrapped(random_iter)
+      mutator = MutatorWrapped(mutator)
+      equalized = EqualizedIterator(mutator)
+      trainer.train(equalized, 0.5, mnist_train_iter.count // (10*(i+1)*(i+1)), True)
+
+    for i in range(8):
+      random_iter = RandomMnistIterator(mnist_train_iter, mnist_train_iter.count*10*(i+1))
+      equalized = EqualizedIterator(random_iter)
+      trainer.train(equalized, 1, True)
+
     tester.save()
 else:
   tester.load()

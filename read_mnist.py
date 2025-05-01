@@ -5,6 +5,8 @@ import os
 
 import random
 
+from image_operations import ImageMutator
+
 # --- Custom Exceptions ---
 class MnistError(Exception):
   """Base exception for MNIST loading errors."""
@@ -217,6 +219,24 @@ class EqualizedIterator:
 
   def __len__(self):
     return len(self.iterator)
+
+class MutatorWrapped:
+  def __init__(self, underlying, all_mutations: bool=True):
+    self.underlying = underlying
+    self.all_mutations = all_mutations
+
+  def __iter__(self):
+    self.iterator = iter(self.underlying)
+    self.mutator = ImageMutator(self.underlying[0])
+    self.mutator.randomlyMutate(self.all_mutations)
+
+  def __next__(self):
+    if self.mutator.images:
+      return self.mutator.images.pop()
+    else:
+      self.mutator = ImageMutator(next(self.iterator))
+      self.mutator.randomlyMutate(self.all_mutations)
+      return self.mutator.images.pop()
 
 class InvalidImageError(MnistError):
   """Error for invalid file format or structure."""
