@@ -162,7 +162,7 @@ class CnnTester:
     return self.layer.forward(image / 255.0)
 
   def test(self, iterator, verbose: bool = False) -> np.ndarray:
-    retmatrix = np.zeros((10, 10))
+    retmatrix = np.zeros((10, 10)).astype(np.int32)
     for image, label in iterator:
       result = self.predict(image)
       max_idx = np.argmax(result)
