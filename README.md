@@ -3,9 +3,9 @@
 This project is a basic implementation of a convolutional neural network from scratch in Python using NumPy only, final model had accuracy of 99.24% on MNIST test set.
 This project also includes an interactive web demo.
 
-There is a [Zig version](github.com/ItsMeSamey/cnn_digit_recognition_python) with same functionality (and same model format) but with higher performance and more functionality.
+There is a [Zig version](https://github.com/ItsMeSamey/cnn_digit_recognition_zig) with same functionality (and same model format) but with higher performance and more functionality.
 
-> ![NOTE]
+> [!NOTE]
 > You should consider using `numba` as python3 runtime for a significant speedup.
 
 ## Usage
