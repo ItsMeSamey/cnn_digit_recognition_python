@@ -3,32 +3,17 @@
 This project is a basic implementation of a convolutional neural network from scratch in Python using NumPy only.
 It also includes an interactive web demo.
 
-## File Structure
-
-- `cnn.py`: Contains the main CNN class, CnnTrainer, and CnnTester for building, training, and evaluating the network.
-- `layers.py`: Defines the different layer types (ConvolveTester/Trainer, DenseTester/Trainer, etc.) and their forward/backward logic.
-- `functions_activate.py`: Implements the various activation functions.
-- `functions_loss.py`: Implements the different loss functions.
-- `read_mnist.py`: Handles reading the MNIST dataset files and provides data iterators.
-- `image_operations.py`: Contains functions for image augmentation.
-
-- `main.py`: Contains the main script for training and testing.
-
-- `server.py`: A web server to handle requests from the demo application.
-- `demo.html`: The frontend HTML and JavaScript for the web demo.
-
-
 ## Usage
 
 1. Ensure you have Python installed.
 2. Clone the repository or download the project files using
-    ```bash
-    git clone https://github.com/ItsMeSamey/cnn_digit_recognition_python.git
-    ```
+```bash
+git clone https://github.com/ItsMeSamey/cnn_digit_recognition_python.git
+```
 3. Install necessary libraries (e.g., NumPy):
-   ```bash
-   pip install numpy
-   ```
+```bash
+pip install numpy
+```
 
 ### Tresting accuracy on MNIST dataset
 Run `main.py` to test the network on the MNIST dataset.
@@ -44,14 +29,26 @@ python3 main.py
 ```
 
 ### Demo Application
+1. Run the server using:
+```bash
+python3 server.py
+```
+2. Open the `demo.html` file in your web browser to launch interactive demo.
 
-1. Navigate to the project directory in your terminal.
-2. Run the server:
-   ```bash
-   python3 server.py
-   ```
-3. The server should start on `http://localhost:5000`.
-4. Open the `demo.html` file in your web browser to launch interactive demo.
+## File Structure
+
+- `cnn.py`: Contains the main CNN class, CnnTrainer, and CnnTester for building, training, and evaluating the network.
+- `layers.py`: Defines the different layer types (ConvolveTester/Trainer, DenseTester/Trainer, etc.) and their forward/backward logic.
+- `functions_activate.py`: Implements the various activation functions.
+- `functions_loss.py`: Implements the different loss functions.
+- `read_mnist.py`: Handles reading the MNIST dataset files and provides data iterators.
+- `image_operations.py`: Contains functions for image augmentation.
+
+- `main.py`: Contains the main script for training and testing.
+
+- `server.py`: A web server to handle requests from the demo application.
+- `demo.html`: The frontend HTML and JavaScript for the web demo.
+
 
 ## License
 This project is licensed under the `GNU GENERAL PUBLIC LICENSE Version 2` - see the [LICENSE](LICENSE) file for details.
