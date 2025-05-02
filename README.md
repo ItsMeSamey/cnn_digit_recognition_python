@@ -8,7 +8,7 @@ It also includes an interactive web demo.
 1. Ensure you have Python installed.
 2. Clone the repository or download the project files using
 ```bash
-git clone https://github.com/ItsMeSamey/cnn_digit_recognition_python.git
+git clone --depth=1 https://github.com/ItsMeSamey/cnn_digit_recognition_python.git
 ```
 3. Install necessary libraries (e.g., NumPy):
 ```bash
