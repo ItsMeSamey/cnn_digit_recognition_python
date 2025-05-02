@@ -6,7 +6,7 @@ This project also includes an interactive web demo.
 There is a [Zig version](https://github.com/ItsMeSamey/cnn_digit_recognition_zig) with same functionality (and same model format) but with higher performance and more functionality.
 
 > [!NOTE]
-> You should consider using `numba` as python3 runtime for a significant speedup.
+> Although you can just use python3, you should consider using `numba` as python3 runtime for a significant speedup.
 
 ## Usage
 
